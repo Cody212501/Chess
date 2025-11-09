@@ -61,4 +61,14 @@ public class MainFrame extends JFrame{
         // TODO: Eseménykezelők hozzáadása a menüpontokhoz
         // (ezt a MenuController végzi)
     }
+
+    /**
+     * Helper method to create a JMenuItem and attach the listener.
+     */
+    private void addMenuItem(JMenu menu, String text, String command, MenuController listener) {
+        JMenuItem item = new JMenuItem(text);
+        item.setActionCommand(command);
+        item.addActionListener(listener);
+        menu.add(item);
+    }
 }
