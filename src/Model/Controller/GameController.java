@@ -233,6 +233,9 @@ public class GameController{
     private void refreshAllViews(){
         if (gameState == null) return;
 
+        // Tell the board panel who the current player is so it can rotate
+        boardPanel.setViewpoint(gameState.isWhiteTurn());
+
         boardPanel.updateBoard(gameState.getBoard());
         sidePanel.updateMoveHistory(gameState.getMoveHistory());
         sidePanel.updatePlayerInfo(gameState.getWhitePlayer(), gameState.getBlackPlayer());

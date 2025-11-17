@@ -2,16 +2,17 @@ package Model.IOs;
 
 import Model.*;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.nio.file.*;
 
-public class JSONPersistance{
+public class JsonPersistence{
     private final Gson gson;
 
     public JsonPersistence() {
         //Use pretty printing for readable JSON files (good for debugging).
-        this.json = new GsonBuilder().setPrettyPrinting().create();
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
     }
 
     /**
@@ -24,7 +25,7 @@ public class JSONPersistance{
     public void saveGame(GameState state, String filePath) throws IOException {
         // Use try-with-resources to ensure the writer is closed automatically.
         try (Writer writer = new FileWriter(filePath)) {
-            json.toJson(state, writer);
+            gson.toJson(state, writer);
         }
     }
 
@@ -39,7 +40,7 @@ public class JSONPersistance{
         // Use try-with-resources to ensure the reader is closed.
         try (Reader reader = Files.newBufferedReader(Paths.get(filePath))) {
             // Gson handles the reconstruction of the entire object graph.
-            GameState state = json.fromJson(reader, GameState.class);
+            GameState state = gson.fromJson(reader, GameState.class);
             return state;
         }
     }

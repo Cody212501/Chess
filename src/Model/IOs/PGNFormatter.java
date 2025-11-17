@@ -121,9 +121,9 @@ public class PGNFormatter{
         // We rely on the move being tagged.
         if (move.isCastling()) {
             // Kingside (short) castle
-            if (move.getTo().col() == 6) return "O-O" + getCheckOrMateSymbol(move);
+            if (move.getTo().column() == 6) return "O-O" + getCheckOrMateSymbol(move);
             // Queenside (long) castle
-            if (move.getTo().col() == 2) return "O-O-O" + getCheckOrMateSymbol(move);
+            if (move.getTo().column() == 2) return "O-O-O" + getCheckOrMateSymbol(move);
         }
 
         StringBuilder san = new StringBuilder();
@@ -137,7 +137,7 @@ public class PGNFormatter{
 
         if (isCapture && piece.getType() == PieceType.PAWN) {
             // Pawn captures include the departure file (e.g., "exd5")
-            san.append(getFileChar(move.getFrom().col()));
+            san.append(getFileChar(move.getFrom().column()));
         }
 
         // --- 4. Disambiguation (The Hardest Part) ---
@@ -219,8 +219,8 @@ public class PGNFormatter{
         //If ambiguity exists, resolve it
 
         // 1. If files (columns) are different, use the file (e.g., "Nbd2")
-        if (move.getFrom().col() != ambiguitySource.col()) {
-            return getFileChar(move.getFrom().col());
+        if (move.getFrom().column() != ambiguitySource.column()) {
+            return getFileChar(move.getFrom().column());
         }
 
         // 2. If files are same, use the rank (row) (e.g., "R1e2")
@@ -271,7 +271,7 @@ public class PGNFormatter{
      * Converts a Position object (e.g., row=6, col=4) to notation (e.g., "e2").
      */
     private String positionToNotation(Position pos) {
-        return getFileChar(pos.col()) + getRankChar(pos.row());
+        return getFileChar(pos.column()) + getRankChar(pos.row());
     }
 
     /**

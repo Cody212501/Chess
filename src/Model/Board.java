@@ -1,9 +1,9 @@
 package Model;
 
-import Model.pieces.*;
+import Model.Pieces.*;
 
 public class Board{
-    //The 8x8 grid. pieceGrid[row][col]
+    //The 8x8 grid. pieceGrid[row][column]
     private final Piece[][] pieceGrid;
 
     public Board() {
@@ -86,12 +86,12 @@ public class Board{
         if (!pos.isOnBoard()) {
             return null;
         }
-        return pieceGrid[pos.row()][pos.col()];
+        return pieceGrid[pos.row()][pos.column()];
     }
 
     public void setPieceAt(Position pos, Piece piece) {
         if (pos.isOnBoard()) {
-            pieceGrid[pos.row()][pos.col()] = piece;
+            pieceGrid[pos.row()][pos.column()] = piece;
         }
     }
 

@@ -13,7 +13,7 @@ public class Pawn extends Piece{
     public Set<Position> getPossiblyLegalMoves(Board board, Position currentPos){
         Set<Position> moves = new HashSet<>();
         int r = currentPos.row();
-        int c = currentPos.col();
+        int c = currentPos.column();
 
         // A lépés iránya a színtől függ (fehér: -1 (felfelé), fekete: +1 (lefelé))
         int direction = isWhite ? -1 : 1;

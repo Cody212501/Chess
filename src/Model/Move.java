@@ -1,6 +1,6 @@
 package Model;
 
-import Model.pieces.*;
+import Model.Pieces.*;
 
 public class Move{
     private final Position from;

@@ -80,7 +80,7 @@ public class MoveLogModel extends AbstractTableModel{
     }
 
     private String positionToNotation(Position pos) {
-        char file = (char) ('a' + pos.coloumn());
+        char file = (char) ('a' + pos.column());
         char rank = (char) ('8' - pos.row());
         return "" + file + rank;
     }

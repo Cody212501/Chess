@@ -18,7 +18,7 @@ public class King extends Piece{
             for (int dc = -1; dc <= 1; dc++){
                 if (dr == 0 && dc == 0) continue; // A jelenlegi pozíciót kihagyjuk
 
-                Position targetPos = new Position(currentPos.row() + dr, currentPos.col() + dc);
+                Position targetPos = new Position(currentPos.row() + dr, currentPos.column() + dc);
 
                 if (targetPos.isOnBoard()){
                     // Csak azt ellenőrizzük, hogy nem lépünk-e saját bábura

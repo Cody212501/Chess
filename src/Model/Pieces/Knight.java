@@ -18,7 +18,7 @@ public class Knight extends Piece{
         int[] dCols = { -1,  1, -2,  2, -2,  2, -1,  1 };
 
         for(int i = 0; i < 8; i++){
-            Position targetPos = new Position(currentPos.row() + dRows[i], currentPos.col() + dCols[i]);
+            Position targetPos = new Position(currentPos.row() + dRows[i], currentPos.column() + dCols[i]);
 
             if(targetPos.isOnBoard()){
                 // A huszár ugrik, tehát csak azt kell ellenőrizni,
