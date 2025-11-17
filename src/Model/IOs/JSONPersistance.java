@@ -1,19 +1,17 @@
 package Model.IOs;
 
-import model.*;
+import Model.*;
 
-import org.json.simple;
+import com.google.gson.*;
 import java.io.*;
 import java.nio.file.*;
 
 public class JSONPersistance{
-    private final Json json;
+    private final Gson gson;
 
     public JsonPersistence() {
-        // Use pretty printing for readable JSON files (good for debugging).
-        this.json = new GsonBuilder()
-                .setPrettyPrinting()
-                .create();
+        //Use pretty printing for readable JSON files (good for debugging).
+        this.json = new GsonBuilder().setPrettyPrinting().create();
     }
 
     /**
