@@ -26,7 +26,7 @@ public class GameController{
 
     //Helper classes (Persistence)
     private final JsonPersistence jsonPersistence;
-    private final PgnFormatter pgnFormatter;
+    private final PGNFormatter pgnFormatter;
     //private final PgnParser pgnParser;
 
     public GameController(MainFrame mainFrame, BoardPanel boardPanel, SidePanel sidePanel){
@@ -36,7 +36,7 @@ public class GameController{
 
         //Initialise helper classes
         this.jsonPersistence = new JsonPersistence();
-        this.pgnFormatter = new PgnFormatter();
+        this.pgnFormatter = new PGNFormatter();
         //this.pgnParser = new PgnParser();
 
         //No game is loaded initially
