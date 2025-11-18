@@ -1,6 +1,5 @@
 package Model.Controller;
 
-import javax.swing.*;
 import java.awt.event.*;
 
 /**
@@ -42,8 +41,7 @@ public class MenuController implements ActionListener{
                 gameController.handleExportPgn();
                 break;
             case "IMPORT_PGN":
-                // TODO: gameController.handleImportPgn();
-                JOptionPane.showMessageDialog(null, "PGN Import (not implemented)", "Error", JOptionPane.ERROR_MESSAGE);
+                gameController.handleImportPgn();
                 break;
             case "EXIT":
                 System.exit(0);

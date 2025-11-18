@@ -26,7 +26,7 @@ public class BoardPanel extends JPanel{
 
     //Image Caching
     private final Map<String, Image> pieceImages;
-    private final String IMAGE_PATH_PREFIX = "/resources/ChessPiecesPictures/";
+    private final String IMAGE_PATH_PREFIX = "/Pictures/";
 
 //methods start here
     public BoardPanel() {

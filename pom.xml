@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>Chess</groupId>
-  <artifactId>sakk</artifactId>
+  <artifactId>Chess</artifactId>
   <version>1.0.0</version>
 
   <properties>
@@ -35,6 +35,12 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <targetPath>D:/Egyetem/Prog 3/NHF/Chess/resources</targetPath>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

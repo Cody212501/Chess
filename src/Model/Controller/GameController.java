@@ -27,6 +27,10 @@ public class GameController{
     //Helper classes (Persistence)
     private final JsonPersistence jsonPersistence;
     private final PGNFormatter pgnFormatter;
+    private final PGNParser pgnParser;
+
+    // State flag to stop interactions when game is over
+    private boolean isGameInProgress = false;
 
     public GameController(MainFrame mainFrame, BoardPanel boardPanel, SidePanel sidePanel){
         this.mainFrame = mainFrame;
@@ -36,6 +40,7 @@ public class GameController{
         //Initialise helper classes
         this.jsonPersistence = new JsonPersistence();
         this.pgnFormatter = new PGNFormatter();
+        this.pgnParser = new PGNParser();
 
         //No game is loaded initially
         this.gameState = null;
@@ -73,6 +78,8 @@ public class GameController{
         if (dialog.isSucceeded()){
             Player white = new Player(dialog.getWhiteName(), dialog.getWhiteElo());
             Player black = new Player(dialog.getBlackName(), dialog.getBlackElo());
+            // Timer settings are collected in dialog but GameState doesn't support time yet.
+            // We proceed without it for now.
             //TODO: Process timer settings (dialog.isTimerEnabled()...)
 
             startNewGame(white, black);
@@ -88,6 +95,7 @@ public class GameController{
     private void startNewGame(Player white, Player black){
         this.gameState = new GameState();
         this.gameState.setPlayers(white, black);
+        this.isGameInProgress = true;
 
         //We refresh the views with the new state.
         refreshAllViews();
@@ -107,7 +115,6 @@ public class GameController{
         Move move = ruleEngine.generateMove(gameState, from, to);
 
         if (move != null) {
-
             // 2. Handle Promotion (if move is tagged)
             if (move.isPromotion()) {
                 // We must ask the user what piece they want(by default, a Queen is selected)
@@ -118,17 +125,19 @@ public class GameController{
             // 3. Execute the move on the Model
             gameState.makeMove(move);
 
-            // 4. Refresh all Views
-            refreshAllViews();
-
-            // 5. Check for game-ending conditions (using the *new* state)
+            // 4. Check for game-ending conditions
             if (move.isCheckmate()) {
-                String winner = gameState.isWhiteTurn() ? "Black" : "White";
-                JOptionPane.showMessageDialog(mainFrame, "Checkmate! " + winner + " wins.");
-                // TODO: Disable board
+                refreshAllViews();
+                String winner = !gameState.isWhiteTurn() ? "Fehér" : "Fekete"; // Previous player made the mate
+                JOptionPane.showMessageDialog(mainFrame, "Sakk-matt! " + winner + " nyert.");
+                endGame();
             } else if (ruleEngine.isStalemate(gameState)) {
-                JOptionPane.showMessageDialog(mainFrame, "Stalemate! The game is a draw.");
-                // TODO: Disable board
+                refreshAllViews();
+                JOptionPane.showMessageDialog(mainFrame, "Patt! A játék döntetlen.");
+                endGame();
+            } else {
+                // 5. Refresh views if game continues
+                refreshAllViews();
             }
 
         } else {
@@ -137,6 +146,12 @@ public class GameController{
             boardPanel.updateBoard(gameState.getBoard()); // Resets the piece
         }
     }
+
+    private void endGame() {
+        isGameInProgress = false;
+        boardPanel.clearSelections();
+    }
+
     /**
      * Helper method to show a dialog for pawn promotion.
      */
@@ -170,6 +185,8 @@ public class GameController{
         fileChooser.setDialogTitle("Save Game State (JSON)");
         if (fileChooser.showSaveDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
             File file = fileChooser.getSelectedFile();
+
+            // Ensure extension is correct
             try {
                 jsonPersistence.saveGame(gameState, file.getPath());
                 JOptionPane.showMessageDialog(mainFrame, "Game saved successfully!");
@@ -216,6 +233,27 @@ public class GameController{
                 JOptionPane.showMessageDialog(mainFrame, "Game exported to PGN successfully!");
             } catch (Exception e){
                 JOptionPane.showMessageDialog(mainFrame, "Error during export:\n" + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    /**
+     * Handles the "PGN Import" menu item.
+     */
+    public void handleImportPgn() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("PGN Importálása");
+        if (fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            try {
+                GameState newState = pgnParser.importGame(file.getPath());
+                this.gameState = newState;
+                this.isGameInProgress = true;
+                refreshAllViews();
+                JOptionPane.showMessageDialog(mainFrame, "PGN imprt successful!");
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(mainFrame, "Hiba PGN importálás közben:\n" + e.getMessage(), "Import Hiba", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

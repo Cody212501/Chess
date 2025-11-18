@@ -1,9 +1,10 @@
 package Model.IOs;
 
 import Model.*;
+import Model.Pieces.*;
 
 import java.io.*;
-import java.util.*;
+import java.util.regex.*;
 import java.nio.file.*;
 
 /**
@@ -16,105 +17,213 @@ import java.nio.file.*;
  *
  * IMPORTING is even harder, as it requires a full chess parser
  * that understands the current board state to interpret moves like "e4" or "Nf3".
- *
- * This class provides the basic structure, but the core logic
- * (marked with TODO) is non-trivial and often requires a dedicated library.
  */
 public class PGNParser{
     /**
      * Exports the game to PGN format.
+     * This method delegates the complex task of formatting (disambiguation, headers, etc.)
+     * to the specialized PGNFormatter class.
+     *
      * @param state The GameState to export.
      * @param filePath The target file path.
-     * @throws IOException
+     * @throws IOException If an I/O error occurs during writing.
      */
     public void exportGame(GameState state, String filePath) throws IOException {
-        try (Writer writer = new FileWriter(filePath)) {
-            // 1. Write PGN Headers (Tags)
-            writePgnHeader(writer, state);
+        // 1. Generate the PGN content using the formatter
+        PGNFormatter formatter = new PGNFormatter();
+        String pgnContent = formatter.format(state);
 
-            // 2. Write Move Text
-            String moveText = formatMoveText(state.getMoveHistory());
-            writer.write(moveText);
-
-            // 3. Write Result (e.g., "1-0", "0-1", "1/2-1/2")
-            // TODO: Determine game result
-            writer.write(" *"); // "*" means result is unknown
+        // 2. Write the content to the file
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
+            writer.write(pgnContent);
         }
     }
 
-    private void writePgnHeader(Writer writer, GameState state) throws IOException {
-        Player white = state.getWhitePlayer();
-        Player black = state.getBlackPlayer();
-
-        writer.write("[Event \"Local Game\"]\n");
-        writer.write("[Site \"Unknown\"]\n");
-        writer.write(String.format("[Date \"%s\"]\n", java.time.LocalDate.now()));
-        writer.write("[Round \"1\"]\n");
-        writer.write(String.format("[White \"%s\"]\n", white != null ? white.getName() : "White"));
-        writer.write(String.format("[Black \"%s\"]\n", black != null ? black.getName() : "Black"));
-        writer.write(String.format("[WhiteElo \"%d\"]\n", white != null ? white.getElo() : 0));
-        writer.write(String.format("[BlackElo \"%d\"]\n", black != null ? black.getElo() : 0));
-        writer.write("[Result \"*\"]\n"); // Unknown result
-        writer.write("\n"); // Empty line before moves
-    }
-
     /**
-     * This is the hardest part of PGN EXPORT.
-     * It needs to convert Move(from, to) into "e4", "Nf3", "Qxh7#", etc.
-     */
-    private String formatMoveText(List<Move> moves) {
-        // TODO: Implement a full Standard Algebraic Notation (SAN) converter.
-        // This requires:
-        // 1. Knowing the piece type (Pawn moves are just "e4", others "Nf3").
-        // 2. Knowing if it was a capture ("exd5", "Qxa4").
-        // 3. Checking for check/checkmate ("+", "#").
-        // 4. Resolving ambiguities (e.g., if two Knights can go to f3,
-        //    it must be "Ngf3" or "Ndf3").
-        // 5. Handling castling ("O-O", "O-O-O").
-
-        // For now, we return a placeholder.
-        StringBuilder sb = new StringBuilder();
-        int moveNumber = 1;
-        for (int i = 0; i < moves.size(); i++) {
-            if (i % 2 == 0) {
-                sb.append(moveNumber).append(". ");
-                moveNumber++;
-            }
-            // Using the simple "from-to" as a placeholder
-            sb.append(positionToNotation(moves.get(i).getFrom()));
-            sb.append(positionToNotation(moves.get(i).getTo())); // PGN does not use '-', but 'x' for capture
-            sb.append(" ");
-        }
-
-        System.err.println("WARNING: PGN move formatting is not fully implemented. Using simple notation.");
-        return sb.toString();
-    }
-
-    /**
-     * This is the hardest part of PGN IMPORT.
-     * It needs to parse "e4", "Nf3" etc. back into (from, to) coordinates
-     * based on the current board state.
+     * Imports a PGN file.
+     * This implementation is a basic parser that handles SAN moves (e.g. "e4", "Nf3").
+     * It does NOT support recursive variations or comments ({}).
+     *
+     * @param filePath The path to the .pgn file.
+     * @return A new GameState object with the played moves.
      */
     public GameState importGame(String filePath) throws IOException {
-        // TODO: Implement a full PGN parser.
-        // 1. Read the file, separating tags from move text.
-        // 2. Parse tags to set up player names, ELO, etc.
-        // 3. Create a new GameState and a RuleEngine.
-        // 4. Iterate through the move text (e.g., "1. e4 e5 2. Nf3 Nc6").
-        // 5. For EACH move string (e.g., "Nf3"):
-        //    a. Ask the RuleEngine: "What piece of the current player can
-        //       legally move to 'f3'?"
-        //    b. If it's ambiguous (e.g., "Nf3" when "Ngf3" was required),
-        //       throw an error.
-        //    c. Get the resulting Move(from, to, piece) object.
-        //    d. Apply the move to the board (state.makeMove(move)).
-        //    e. Repeat for the next move.
+        GameState newState = new GameState();
+        RuleEngine ruleEngine = new RuleEngine(); // We need logic to disambiguate SAN
 
-        System.err.println("ERROR: PGN import is not implemented.");
-        throw new UnsupportedOperationException("PGN Import is a highly complex feature and is not implemented.");
+        String content = Files.readString(Paths.get(filePath));
+
+        // 1. Parse Tags (simplistic approach)
+        parseTags(content, newState);
+
+        // 2. Extract Move Text (remove tags)
+        String moveText = content.replaceAll("\\[.*?\\]", "");
+        // Remove move numbers (1. 2. etc) and results (1-0 etc)
+        moveText = moveText.replaceAll("\\d+\\.|1-0|0-1|1/2-1/2|\\*", "");
+        // Replace newlines with spaces
+        moveText = moveText.replace("\n", " ").replace("\r", " ");
+
+        // Split by spaces
+        String[] tokens = moveText.trim().split("\\s+");
+
+        for (String token : tokens) {
+            if (token.isEmpty()) continue;
+
+            // Try to perform the move
+            Move move = parseSanMove(newState, ruleEngine, token);
+            if (move != null) {
+                newState.makeMove(move);
+            } else {
+                System.err.println("Skipping unparseable token: " + token);
+            }
+        }
+
+        return newState;
     }
 
+    private void parseTags(String content, GameState state) {
+        Player white = new Player("White", 0);
+        Player black = new Player("Black", 0);
+
+        Matcher mWhite = Pattern.compile("\\[White \"(.*?)\"\\]").matcher(content);
+        if (mWhite.find()) white.setName(mWhite.group(1));
+
+        Matcher mBlack = Pattern.compile("\\[Black \"(.*?)\"\\]").matcher(content);
+        if (mBlack.find()) black.setName(mBlack.group(1));
+
+        Matcher mWhiteElo = Pattern.compile("\\[WhiteElo \"(\\d+)\"\\]").matcher(content);
+        if (mWhiteElo.find()) white.setElo(Integer.parseInt(mWhiteElo.group(1)));
+
+        Matcher mBlackElo = Pattern.compile("\\[BlackElo \"(\\d+)\"\\]").matcher(content);
+        if (mBlackElo.find()) black.setElo(Integer.parseInt(mBlackElo.group(1)));
+
+        state.setPlayers(white, black);
+    }
+
+    /**
+     * Parses a single Standard Algebraic Notation (SAN) move.
+     * e.g. "e4", "Nf3", "O-O", "Rxe1+"
+     */
+    private Move parseSanMove(GameState state, RuleEngine engine, String san) {
+        // Clean the SAN (remove check/mate symbols)
+        String cleanSan = san.replace("+", "").replace("#", "");
+
+        // 1. Handle Castling
+        if (cleanSan.equals("O-O") || cleanSan.equals("0-0")) {
+            return findCastlingMove(state, engine, true); // Kingside
+        }
+        if (cleanSan.equals("O-O-O") || cleanSan.equals("0-0-0")) {
+            return findCastlingMove(state, engine, false); // Queenside
+        }
+
+        // 2. Identify Target Square (last 2 chars)
+        // e.g. "Nf3" -> f3, "exd5" -> d5, "Qh4" -> h4
+        // Promotion case: "e8=Q" -> last 2 chars are "=Q", need to look before that
+        String targetStr;
+        String promotionChar = null;
+
+        if (cleanSan.contains("=")) {
+            int eqIndex = cleanSan.indexOf("=");
+            targetStr = cleanSan.substring(eqIndex - 2, eqIndex);
+            promotionChar = cleanSan.substring(eqIndex + 1);
+            cleanSan = cleanSan.substring(0, eqIndex); // Remove promotion part for parsing
+        } else {
+            if (cleanSan.length() < 2) return null;
+            targetStr = cleanSan.substring(cleanSan.length() - 2);
+        }
+        Position targetPos = notationToPosition(targetStr);
+        if (targetPos == null) return null;
+
+        // 3. Identify Piece Type
+        // If starts with Uppercase (B, N, R, Q, K), it's a piece. Otherwise Pawn.
+        char firstChar = cleanSan.charAt(0);
+        PieceType type = PieceType.PAWN; // Default
+        if (Character.isUpperCase(firstChar)) {
+            switch (firstChar) {
+                case 'N': type = PieceType.KNIGHT; break;
+                case 'B': type = PieceType.BISHOP; break;
+                case 'R': type = PieceType.ROOK; break;
+                case 'Q': type = PieceType.QUEEN; break;
+                case 'K': type = PieceType.KING; break;
+            }
+            // Remove piece char for ambiguity checking
+            cleanSan = cleanSan.substring(1);
+        }
+
+        // 4. Handle Ambiguity (e.g. "Nbd2", "R1e1", "exd5")
+        // Remaining text in cleanSan (e.g. "bd2", "1e1", "xd5")
+        // Actually, at this point cleanSan might be "bd2" (from Nbd2), "f3" (from Nf3).
+        // We remove the target square from the end.
+        String disambiguation = "";
+        if (cleanSan.length() > 2) {
+            // Remove target square from end
+            disambiguation = cleanSan.substring(0, cleanSan.length() - 2);
+            // Remove capture 'x'
+            disambiguation = disambiguation.replace("x", "");
+        }
+
+        // 5. Find the move using RuleEngine
+        /**
+         * We iterate over all pieces of the current player that match the type.
+         * We check if they can move to 'targetPos'.
+         * We filter by 'disambiguation' info if present.
+         */
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                Position currentPos = new Position(r, c);
+                Piece p = state.getBoard().getPieceAt(currentPos);
+
+                if (p != null && p.isWhite() == state.isWhiteTurn() && p.getType() == type) {
+                    // Check if matches disambiguation
+                    if (!disambiguation.isEmpty()) {
+                        char fileChar = (char) ('a' + c);
+                        char rankChar = (char) ('8' - r);
+                        boolean matchesFile = disambiguation.indexOf(fileChar) >= 0;
+                        boolean matchesRank = disambiguation.indexOf(rankChar) >= 0;
+
+                        if (!matchesFile && !matchesRank) continue; // Matches neither info provided
+                    }
+
+                    // Check if legal move
+                    Move legalMove = engine.generateMove(state, currentPos, targetPos);
+                    if (legalMove != null) {
+                        // Handle Promotion Piece if parsed
+                        if (legalMove.isPromotion() && promotionChar != null) {
+                            Piece promoPiece;
+                            switch (promotionChar) {
+                                case "R": promoPiece = new Rook(state.isWhiteTurn()); break;
+                                case "B": promoPiece = new Bishop(state.isWhiteTurn()); break;
+                                case "N": promoPiece = new Knight(state.isWhiteTurn()); break;
+                                default: promoPiece = new Queen(state.isWhiteTurn());
+                            }
+                            legalMove.setPromotionPiece(promoPiece);
+                        }
+                        return legalMove;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private Move findCastlingMove(GameState state, RuleEngine engine, boolean kingside) {
+        int r = state.isWhiteTurn() ? 7 : 0;
+        Position kingPos = new Position(r, 4);
+        Position targetPos = new Position(r, kingside ? 6 : 2);
+        return engine.generateMove(state, kingPos, targetPos);
+    }
+
+
     // Helper methods (from CsvPersistence)
+    private Position notationToPosition(String notation) {
+        if (notation.length() != 2) return null;
+        int col = notation.charAt(0) - 'a';
+        int row = '8' - notation.charAt(1);
+        if (col < 0 || col > 7 || row < 0 || row > 7) return null;
+        return new Position(row, col);
+    }
+
     private String positionToNotation(Position pos) {
         char file = (char) ('a' + pos.column());
         char rank = (char) ('8' - pos.row());

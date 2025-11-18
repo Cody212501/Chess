@@ -12,7 +12,8 @@ public class NewGameDialog extends JDialog{
     private JTextField blackNameField;
     private JSpinner blackEloSpinner;
     private JCheckBox timerCheckBox;
-    // TODO: Add spinners for timer settings (e.g., minutes, increment)
+    private JSpinner minutesSpinner;
+    private JSpinner incrementSpinner;
 
     private boolean succeeded = false;
 
@@ -59,9 +60,24 @@ public class NewGameDialog extends JDialog{
 
         // --- Timer Settings ---
         gbc.gridx = 0; gbc.gridy = 4;
-        timerCheckBox = new JCheckBox("Use Timer");
+        timerCheckBox = new JCheckBox("Időzítő használata");
         formPanel.add(timerCheckBox, gbc);
-        // TODO: Add listener to enable/disable timer fields
+
+        gbc.gridx = 1; gbc.gridy = 4;
+        JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        minutesSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 180, 1));
+        incrementSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 60, 1));
+        timerPanel.add(new JLabel("Perc:"));
+        timerPanel.add(minutesSpinner);
+        timerPanel.add(new JLabel("Incr (mp):"));
+        timerPanel.add(incrementSpinner);
+        formPanel.add(timerPanel, gbc);
+
+        // Disable timer fields by default
+        enableTimerFields(false);
+
+        // Add listener to checkbox
+        timerCheckBox.addActionListener(e -> enableTimerFields(timerCheckBox.isSelected()));
 
         // --- OK / Cancel Buttons ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -81,8 +97,17 @@ public class NewGameDialog extends JDialog{
         setLocationRelativeTo(owner);
     }
 
+    private void enableTimerFields(boolean enable) {
+        minutesSpinner.setEnabled(enable);
+        incrementSpinner.setEnabled(enable);
+    }
+
     private void onOK() {
-        // TODO: Add validation (e.g., names cannot be empty)
+        if (whiteNameField.getText().trim().isEmpty() || blackNameField.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "You must give a name, this field can't be empty!",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         this.succeeded = true;
         setVisible(false);
     }
