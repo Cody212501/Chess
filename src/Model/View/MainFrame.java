@@ -3,7 +3,7 @@ package Model.View;
 import javax.swing.*;
 import java.awt.*;
 
-import Model.GameController;
+import Model.Controller.*;
 
 public class MainFrame extends JFrame{
     private BoardPanel boardPanel;

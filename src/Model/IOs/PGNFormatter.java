@@ -24,6 +24,12 @@ public class PGNFormatter{
     // We need a RuleEngine to check moves for other pieces during simulation
     private RuleEngine ambiguityEngine;
 
+    public PGNFormatter(){
+        this.simulationBoard = new Board();
+        // A RuleEngine-t argumentumok nélkül inicializáljuk
+        this.ambiguityEngine = new RuleEngine();
+    }
+
     /**
      * Main public method to format a game.
      * @param state The GameState to format.
@@ -40,7 +46,7 @@ public class PGNFormatter{
         appendMovetext(sb, state);
 
         // 3. Append Result
-        // TODO: The GameState should know the result (e.g., "1-0", "0-1", "1/2-1/2")
+        // TODO: The GameState should know the result ("1-0", "0-1", "1/2-1/2")
         // For now, we use "*" (unknown).
         sb.append(" *");
 
@@ -85,8 +91,7 @@ public class PGNFormatter{
      */
     private void appendMovetext(StringBuilder sb, GameState state) {
         // We must re-simulate the game move by move to check for ambiguities
-        this.simulationBoard = new Board(); // Creates a board with initial setup
-        this.ambiguityEngine = new RuleEngine(this.simulationBoard);
+        this.ambiguityEngine = new RuleEngine();
 
         int moveNumber = 1;
 
@@ -178,7 +183,7 @@ public class PGNFormatter{
         Position target = move.getTo();
         boolean isWhite = movingPiece.isWhite();
 
-        Position ambiguitySource = null; // Position of the *other* piece
+        Position ambiguitySource = null; // Position of the *other* piece in question
 
         // Iterate over the whole (simulation) board
         for (int r = 0; r < 8; r++) {
@@ -190,26 +195,31 @@ public class PGNFormatter{
 
                 Piece otherPiece = this.simulationBoard.getPieceAt(currentPos);
 
+                // Check if we can fund a piece of the same type and color
                 if (otherPiece != null &&
                         otherPiece.isWhite() == isWhite &&
-                        otherPiece.getType() == movingPiece.getType())
-                {
+                        otherPiece.getType() == movingPiece.getType()){
                     // Found another piece of the same type and colour.
-                    // Can it *also* move to the target square?
-                    // We must use the *local* simulation state to check.
-                    GameState simState = new GameState(this.simulationBoard, isWhite);
+                    // Can it also LEGALLY move to the target square?
 
-                    // We need all its *legal* moves (respecting checks, pins, etc.)
-                    Set<Position> legalMoves = ambiguityEngine.getValidMovesForPiece(simState, currentPos);
+                    // 1. Create a temporary GameState representing the current simulation step.
+                    //    we have added this constructor already.
+                    GameState tempState = new GameState(this.simulationBoard, isWhite);
+
+                    // 2. Ask the RuleEngine for valid moves for this 'otherPiece'.
+                    //    This checks for checks, pins, etc.
+                    Set<Position> legalMoves = ambiguityEngine.getValidMovesForPiece(tempState, currentPos);
 
                     if (legalMoves.contains(target)) {
-                        // AMBIGUITY FOUND.
+                        // AMBIGUITY FOUND: Another piece can legally move to the same square.
                         ambiguitySource = currentPos;
-                        break;
+                        break; // We found at least one ambiguity, that's enough to require disambiguation logic
                     }
                 }
             }
-            if (ambiguitySource != null) break;
+            if (ambiguitySource != null){
+                break;
+            }
         }
 
         if (ambiguitySource == null) {
@@ -228,14 +238,13 @@ public class PGNFormatter{
             return getRankChar(move.getFrom().row());
         }
 
-        // 3. If file AND rank are same (e.g., promoted pawns), use full coord
+        // 3. If file AND rank are same (e.g., promoted pawns), use full coordinates (e.g. "Qe1e5")
         // This is rare but possible.
         return positionToNotation(move.getFrom());
     }
 
 
     //Helpers
-
     /**
      * Gets the single-character PGN symbol for a piece.
      * Note: Pawn is an empty string.

@@ -1,6 +1,6 @@
 package Model.IOs;
 
-import model.*;
+import Model.*;
 
 import java.io.*;
 import java.util.*;
@@ -11,7 +11,7 @@ import java.nio.file.*;
  *
  * This is a highly complex task.
  * EXPORTING requires converting (from, to) coordinates into Standard
- * Algebraic Notation (e.g., "Nf3", "Qxa4+", "O-O"), which requires
+ * Algebraic Notation (e.g., "Nf3", "Qxa4+", "O-O", "O-O-O"), which requires
  * checking for ambiguities (e.g., "Nbd2" vs "Nfd2").
  *
  * IMPORTING is even harder, as it requires a full chess parser

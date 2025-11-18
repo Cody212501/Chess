@@ -203,7 +203,7 @@ public class BoardPanel extends JPanel{
 
         for (String color : colors) {
             for (String type : types) {
-                String fileName = color + type + ".png";
+                String fileName = color + type + ".jpg";
                 try {
                     // Use getResource() for loading from JAR (deployed app) or file system (IDE development)
                     Image img = ImageIO.read(Objects.requireNonNull(
@@ -227,7 +227,7 @@ public class BoardPanel extends JPanel{
      */
     private Image getPieceImage(Piece piece) {
         if (piece == null) return null;
-        String fileName = (piece.isWhite() ? "White" : "Black") + piece.getType().name() + ".png";
+        String fileName = (piece.isWhite() ? "White" : "Black") + piece.getType().name() + ".jpg";
         return pieceImages.get(fileName);
     }
 

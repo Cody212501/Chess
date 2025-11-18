@@ -27,7 +27,6 @@ public class GameController{
     //Helper classes (Persistence)
     private final JsonPersistence jsonPersistence;
     private final PGNFormatter pgnFormatter;
-    //private final PgnParser pgnParser;
 
     public GameController(MainFrame mainFrame, BoardPanel boardPanel, SidePanel sidePanel){
         this.mainFrame = mainFrame;
@@ -37,10 +36,11 @@ public class GameController{
         //Initialise helper classes
         this.jsonPersistence = new JsonPersistence();
         this.pgnFormatter = new PGNFormatter();
-        //this.pgnParser = new PgnParser();
 
         //No game is loaded initially
         this.gameState = null;
+
+        this.ruleEngine = new RuleEngine();
     }
 
     /**
@@ -88,7 +88,6 @@ public class GameController{
     private void startNewGame(Player white, Player black){
         this.gameState = new GameState();
         this.gameState.setPlayers(white, black);
-        this.ruleEngine = new RuleEngine(this.gameState.getBoard()); //RuleEngine with the board
 
         //We refresh the views with the new state.
         refreshAllViews();
@@ -96,6 +95,7 @@ public class GameController{
 
     /**
      * Handles the user's move attempt (from click or drag).
+     * Asks the RuleEngine to generate a full Move object.
      *
      * @param from The starting position.
      * @param to The target position.
@@ -103,34 +103,57 @@ public class GameController{
     public void handleMoveAttempt(Position from, Position to){
         if (gameState == null) return;
 
-        //1. Validate with the RuleEngine
-        if (ruleEngine.isMoveLegal(gameState, from, to)){
+        // 1. Ask the RuleEngine to generate and validate the move.
+        Move move = ruleEngine.generateMove(gameState, from, to);
 
-            //2. Execute the move on the Model
-            Piece piece = gameState.getBoard().getPieceAt(from);
-            Move move = new Move(from, to, piece);
+        if (move != null) {
 
-            //TODO: "Tag" the move for PGN (check, mate, castling)
-            //This should be done by the RuleEngine.
-            //e.g., move.setCastling(ruleEngine.isCastlingMove(...));
+            // 2. Handle Promotion (if move is tagged)
+            if (move.isPromotion()) {
+                // We must ask the user what piece they want(by default, a Queen is selected)
+                Piece promotionPiece = askForPromotionPiece(gameState.isWhiteTurn());
+                move.setPromotionPiece(promotionPiece);
+            }
 
+            // 3. Execute the move on the Model
             gameState.makeMove(move);
 
-            //3. Refresh all Views
+            // 4. Refresh all Views
             refreshAllViews();
 
-            //4. Check for game-ending conditions
-            if (ruleEngine.isCheckmate(gameState)){
+            // 5. Check for game-ending conditions (using the *new* state)
+            if (move.isCheckmate()) {
                 String winner = gameState.isWhiteTurn() ? "Black" : "White";
                 JOptionPane.showMessageDialog(mainFrame, "Checkmate! " + winner + " wins.");
-            } else if (ruleEngine.isStalemate(gameState)){
+                // TODO: Disable board
+            } else if (ruleEngine.isStalemate(gameState)) {
                 JOptionPane.showMessageDialog(mainFrame, "Stalemate! The game is a draw.");
+                // TODO: Disable board
             }
 
         } else {
-            //If the move was illegal, just reset the GUI
+            // Move was illegal, just reset the GUI
             boardPanel.clearSelections();
-            boardPanel.updateBoard(gameState.getBoard()); //Resets the piece
+            boardPanel.updateBoard(gameState.getBoard()); // Resets the piece
+        }
+    }
+    /**
+     * Helper method to show a dialog for pawn promotion.
+     */
+    private Piece askForPromotionPiece(boolean isWhite) {
+        Object[] options = {"Queen", "Rook", "Bishop", "Knight"};
+        String pieceName = (String) JOptionPane.showInputDialog(mainFrame,
+                "Choose a piece for promotion:",
+                "Pawn Promotion",
+                JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+        switch (pieceName) {
+            case "Rook": return new Rook(isWhite);
+            case "Bishop": return new Bishop(isWhite);
+            case "Knight": return new Knight(isWhite);
+            case "Queen":
+            default:
+                return new Queen(isWhite);
         }
     }
 
@@ -166,7 +189,6 @@ public class GameController{
             File file = fileChooser.getSelectedFile();
             try {
                 this.gameState = jsonPersistence.loadGame(file.getPath());
-                this.ruleEngine = new RuleEngine(gameState.getBoard()); //New RuleEngine for the loaded board
                 refreshAllViews();
                 JOptionPane.showMessageDialog(mainFrame, "Game loaded successfully!");
             } catch (Exception e){
@@ -249,7 +271,7 @@ public class GameController{
      * so it can draw the green dots.
      */
     public Set<Position> getValidMovesForPiece(Position pos){
-        if (gameState == null || ruleEngine == null){
+        if (gameState == null){
             return Set.of(); //Return an empty set
         }
         return ruleEngine.getValidMovesForPiece(gameState, pos);

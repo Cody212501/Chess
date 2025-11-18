@@ -59,7 +59,7 @@ public abstract class Piece{
     /**
      * Returns the base filename for the piece's image.
      * e.g., "Pawn", "Rook", "King".
-     * The BoardPanel will add colour prefix (White or Black) and ".png" suffix.
+     * The BoardPanel will add colour prefix (White or Black) and ".jpg" suffix.
      */
     public String getImageBaseName() {
         return type.name(); // Uses the name of the enum constant (e.g., "PAWN")

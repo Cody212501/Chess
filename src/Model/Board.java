@@ -12,6 +12,22 @@ public class Board{
     }
 
     /**
+     * Copy constructor for simulation
+     */
+    public Board(Board other) {
+        this.pieceGrid = new Piece[8][8];
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                this.pieceGrid[r][c] = other.pieceGrid[r][c]; // Pieces are immutable, so shallow copy is fine
+            }
+        }
+    }
+
+    public Board deepCopy() {
+        return new Board(this);
+    }
+
+    /**
      * Sets up the board to the standard starting position.
      */
     public void initialSetup() {
@@ -65,21 +81,48 @@ public class Board{
     public void applyMove(Move move) {
         Position from = move.getFrom();
         Position to = move.getTo();
+        Piece piece = move.getPieceMoved();
 
-        // Check if there was a capture
+        // 1. Standard Move
         Piece capturedPiece = getPieceAt(to);
         if (capturedPiece != null) {
             move.setPieceCaptured(capturedPiece);
         }
-
-        // Perform the move
-        setPieceAt(to, move.getPieceMoved());
+        setPieceAt(to, piece);
         setPieceAt(from, null);
 
-        // TODO: Handle special moves passed from RuleEngine
-        // e.g., if move.isCastling(), move the Rook as well.
-        // e.g., if move.isEnPassant(), remove the captured pawn.
-        // e.g., if move.isPromotion(), replace the pawn with promotionPiece.
+        // --- 2. Handle Special Moves ---
+        if (move.isCastling()) {
+            // King already moved from (e,g) or (e,c)
+            // We just need to move the rook.
+            if (to.column() == 6) { // Kingside (g-file)
+                Position rookFrom = new Position(from.row(), 7); // h-file
+                Position rookTo = new Position(from.row(), 5); // f-file
+                setPieceAt(rookTo, getPieceAt(rookFrom));
+                setPieceAt(rookFrom, null);
+            } else if (to.column() == 2) { // Queenside (c-file)
+                Position rookFrom = new Position(from.row(), 0); // a-file
+                Position rookTo = new Position(from.row(), 3); // d-file
+                setPieceAt(rookTo, getPieceAt(rookFrom));
+                setPieceAt(rookFrom, null);
+            }
+        }
+        else if (move.isEnPassant()) {
+            // The pawn moved to the 'to' square.
+            // We must remove the *opponent's* pawn, which is
+            // on the same file as 'to', but on the 'from' row.
+            int capturedPawnRow = from.row();
+            int capturedPawnCol = to.column();
+            Position capturedPawnPos = new Position(capturedPawnRow, capturedPawnCol);
+
+            move.setPieceCaptured(getPieceAt(capturedPawnPos));
+            setPieceAt(capturedPawnPos, null);
+        }
+        else if (move.isPromotion()) {
+            // The pawn has already moved to the 'to' square.
+            // We replace it with the promotion piece.
+            setPieceAt(to, move.getPromotionPiece());
+        }
     }
 
     public Piece getPieceAt(Position pos) {
