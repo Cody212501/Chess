@@ -55,7 +55,7 @@ public class CSVParser{
         GameState newState = new GameState(); // Creates a new board in start pos
         RuleEngine ruleEngine = new RuleEngine();
 
-        newState.getMoveHistory().clear(); // Clear the history (though it's new)
+        newState.getMoveHistory().clear(); // Clear the history (even though it's new, artifacts could have remained)
 
         List<String> lines = Files.readAllLines(Paths.get(filePath));
 
@@ -63,7 +63,7 @@ public class CSVParser{
         List<String> moveLines = lines.stream()
                 .skip(1)
                 .filter(line -> !line.trim().isEmpty())
-                .collect(Collectors.toList());
+                .toList();
 
         for (String line : moveLines) {
             String[] parts = line.split(",");
@@ -96,11 +96,18 @@ public class CSVParser{
         }
 
         try {
+            //converting the string of positions
             Position from = notationToPosition(notation.substring(0, 2));
             Position to = notationToPosition(notation.substring(2, 4));
 
-            // Check with the RuleEngine (even if it's just a placeholder)
-            if (engine.isLegalMove(state, from, to)) { // Using the old RuleEngine's method
+            /**
+             * Asking RuleEngine to generate the given move
+             * This checks for its legality, any possible checks, and handles special moves.
+             * If the move is not legal, returns a null.*/
+            Move validMove = engine.generateMove(state, from, to);
+
+            // Check with the RuleEngine
+            if (validMove != null) {
                 Piece piece = state.getBoard().getPieceAt(from);
                 return new Move(from, to, piece);
             } else {
@@ -108,7 +115,7 @@ public class CSVParser{
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("Could not parse move: " + notation);
+            System.err.println("Could not parse move: " + notation + " - " + e.getMessage());
             return null;
         }
     }

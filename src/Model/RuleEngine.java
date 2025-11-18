@@ -138,7 +138,7 @@ public class RuleEngine{
         return isPositionAttacked(board, kingPos, !isWhiteKing);
     }
 
-    // Make public for Checkmate/Stalemate
+    //public for Checkmate/Stalemate
     public boolean isKingInCheck(GameState state, boolean isWhiteKing) {
         return isKingInCheck(state.getBoard(), isWhiteKing);
     }
