@@ -37,7 +37,7 @@
   <build>
     <resources>
       <resource>
-        <targetPath>D:/Egyetem/Prog 3/NHF/Chess/resources</targetPath>
+        <targetPath>/resources</targetPath>
       </resource>
     </resources>
 

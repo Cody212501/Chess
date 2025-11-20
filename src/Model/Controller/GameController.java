@@ -109,7 +109,7 @@ public class GameController{
      * @param to The target position.
      */
     public void handleMoveAttempt(Position from, Position to){
-        if (gameState == null) return;
+        if (gameState == null || !isGameInProgress) return;
 
         // 1. Ask the RuleEngine to generate and validate the move.
         Move move = ruleEngine.generateMove(gameState, from, to);
@@ -124,20 +124,22 @@ public class GameController{
 
             // 3. Execute the move on the Model
             gameState.makeMove(move);
+            refreshAllViews();
 
             // 4. Check for game-ending conditions
             if (move.isCheckmate()) {
-                refreshAllViews();
-                String winner = !gameState.isWhiteTurn() ? "Fehér" : "Fekete"; // Previous player made the mate
-                JOptionPane.showMessageDialog(mainFrame, "Sakk-matt! " + winner + " nyert.");
-                endGame();
-            } else if (ruleEngine.isStalemate(gameState)) {
-                refreshAllViews();
-                JOptionPane.showMessageDialog(mainFrame, "Patt! A játék döntetlen.");
-                endGame();
+                boardPanel.setKingInCheck(findKingPos(!gameState.isWhiteTurn())); // Highlight loser king
+                JOptionPane.showMessageDialog(mainFrame, "Sakk-matt!");
+                isGameInProgress = false;
+            } else if (move.isCheck()) {
+                boardPanel.setKingInCheck(findKingPos(gameState.isWhiteTurn())); // Highlight current king
             } else {
-                // 5. Refresh views if game continues
-                refreshAllViews();
+                boardPanel.setKingInCheck(null); // Clear highlight
+            }
+
+            if (ruleEngine.isStalemate(gameState)) {
+                JOptionPane.showMessageDialog(mainFrame, "Patt!");
+                isGameInProgress = false;
             }
 
         } else {
@@ -145,11 +147,6 @@ public class GameController{
             boardPanel.clearSelections();
             boardPanel.updateBoard(gameState.getBoard()); // Resets the piece
         }
-    }
-
-    private void endGame() {
-        isGameInProgress = false;
-        boardPanel.clearSelections();
     }
 
     /**
@@ -169,6 +166,18 @@ public class GameController{
             case "Queen":
             default: return new Queen(isWhite);
         }
+    }
+
+    private Position findKingPos(boolean isWhite) {
+        Board b = gameState.getBoard();
+        for(int r=0; r<8; r++) {
+            for(int c=0; c<8; c++) {
+                Position p = new Position(r,c);
+                Piece pc = b.getPieceAt(p);
+                if(pc != null && pc.getType() == PieceType.KING && pc.isWhite() == isWhite) return p;
+            }
+        }
+        return null;
     }
 
     /**
@@ -293,6 +302,11 @@ public class GameController{
      */
     private void refreshAllViews(){
         if (gameState == null) return;
+
+        // If it's a new turn and not check, clear red highlight
+        if (!ruleEngine.isKingInCheck(gameState, gameState.isWhiteTurn())) {
+            boardPanel.setKingInCheck(null);
+        }
 
         // Tell the board panel who the current player is so it can rotate
         boardPanel.setViewpoint(gameState.isWhiteTurn());

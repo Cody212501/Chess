@@ -38,22 +38,34 @@ public class MouseController extends MouseAdapter{
             return;
         }
 
-        // 1. Get VIEW coordinates from mouse
-        int viewColumn = e.getX() / BoardPanel.TILE_SIZE;
-        int viewRow = e.getY() / BoardPanel.TILE_SIZE;
+        // Use BoardPanel's logic to translate X,Y to Model Position
+        Position modelPos = boardPanel.getModelPosition(e.getX(), e.getY());
 
-        // 2. Translate VIEW coordinates to MODEL coordinates
-        Position modelClickPos = boardPanel.getModelPosition(viewRow, viewColumn);
-
-        if (!modelClickPos.isOnBoard()){
+        if (!modelPos.isOnBoard()) {
+            selectedModelPos = null;
+            boardPanel.clearSelections();
             return;
         }
 
-        // 3. Store the MODEL position for the drag
-        dragStartModelPos = modelClickPos;
-
-        // Start the visual drag (this uses the *raw* mouse point)
-        boardPanel.startDrag(modelClickPos, e.getPoint());
+        if (selectedModelPos == null) {
+            // Select
+            Piece p = gameController.getGameState().getBoard().getPieceAt(modelPos);
+            if (p != null && p.isWhite() == gameController.getGameState().isWhiteTurn()) {
+                selectedModelPos = modelPos;
+                boardPanel.setSelectedPosition(modelPos);
+                boardPanel.showValidMoves(gameController.getValidMovesForPiece(modelPos));
+            }
+        } else {
+            // Move
+            if (modelPos.equals(selectedModelPos)) {
+                selectedModelPos = null;
+                boardPanel.clearSelections();
+            } else {
+                gameController.handleMoveAttempt(selectedModelPos, modelPos);
+                selectedModelPos = null;
+                boardPanel.clearSelections();
+            }
+        }
     }
 
     /**

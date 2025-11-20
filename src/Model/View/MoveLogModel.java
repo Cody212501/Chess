@@ -56,12 +56,12 @@ public class MoveLogModel extends AbstractTableModel{
                 // Column 1: White's move
                 // (rowIndex * 2) gives the index of the white move
                 int whiteMoveIndex = rowIndex * 2;
-                return (whiteMoveIndex < moves.size()) ? formatMove(moves.get(whiteMoveIndex)) : "";
+                return (whiteMoveIndex < moves.size()) ? formatSan(moves.get(whiteMoveIndex)) : "";
             case 2:
                 // Column 2: Black's move
                 // (rowIndex * 2 + 1) gives the index of the black move
                 int blackMoveIndex = rowIndex * 2 + 1;
-                return (blackMoveIndex < moves.size()) ? formatMove(moves.get(blackMoveIndex)) : "";
+                return (blackMoveIndex < moves.size()) ? formatSan(moves.get(blackMoveIndex)) : "";
             default:
                 return "";
         }
@@ -72,16 +72,57 @@ public class MoveLogModel extends AbstractTableModel{
      * A full implementation would convert this to Standard Algebraic Notation
      * (e.g., "e4" or "Nf3"), which is much more complex.
      */
-    private String formatMove(Move move) {
-        // TODO: This should be replaced by a proper PGN/SAN formatter
-        // for full compliance (e.g., "Nf3" instead of "g1f3").
-        // For now, simple coordinate notation is used.
-        return positionToNotation(move.getFrom()) + positionToNotation(move.getTo());
+    private String formatSan(Move move) {
+        // Simple PGN/SAN formatter for display
+        StringBuilder sb = new StringBuilder();
+
+        // 1. Piece
+        if (move.getPieceMoved().getType() != PieceType.PAWN) {
+            sb.append(getPieceChar(move.getPieceMoved().getType()));
+        }
+
+        // 2. Disambiguation (Simplified: always show file if capture by pawn)
+        if (move.getPieceCaptured() != null && move.getPieceMoved().getType() == PieceType.PAWN) {
+            sb.append(getFileChar(move.getFrom().column()));
+        }
+
+        // 3. Capture
+        if (move.getPieceCaptured() != null) {
+            sb.append("x");
+        }
+
+        // 4. Target
+        sb.append(positionToNotation(move.getTo()));
+
+        // 5. Promotion
+        if (move.isPromotion() && move.getPromotionPiece() != null) {
+            sb.append("=").append(getPieceChar(move.getPromotionPiece().getType()));
+        }
+
+        // 6. Check/Mate
+        if (move.isCheckmate()) sb.append("#");
+        else if (move.isCheck()) sb.append("+");
+
+        return sb.toString();
     }
 
+    private String getPieceChar(PieceType type) {
+        switch(type) {
+            case KNIGHT: return "N";
+            case BISHOP: return "B";
+            case ROOK: return "R";
+            case QUEEN: return "Q";
+            case KING: return "K";
+            default: return "";
+        }
+    }
+
+
     private String positionToNotation(Position pos) {
-        char file = (char) ('a' + pos.column());
-        char rank = (char) ('8' - pos.row());
-        return "" + file + rank;
+        return getFileChar(pos.column()) + (8 - pos.row());
+    }
+
+    private String getFileChar(int col) {
+        return String.valueOf((char)('a' + col));
     }
 }

@@ -40,8 +40,13 @@ public class RuleEngine{
                 //PROMOTION
                 // If it's a promotion, we must ask the user what piece they want.
                 // We set the piece to Queen by default, GameController can override.
-                if (move.isPromotion()) {
-                    move.setPromotionPiece(new Queen(state.isWhiteTurn()));
+                if (piece.getType() == PieceType.PAWN) {
+                    int endRow = piece.isWhite() ? 0 : 7; // White moves up (row 0), Black moves down
+                    if (to.row() == endRow) {
+                        move.setPromotion(true);
+                        // Default promotion is Queen, controller will ask user, what they want
+                        move.setPromotionPiece(new Queen(state.isWhiteTurn()));
+                    }
                 }
 
                 //CHECK/MATE detection
@@ -50,7 +55,7 @@ public class RuleEngine{
                 Board nextBoard = simulateMove(state.getBoard(), move);
                 GameState nextState = new GameState(nextBoard, !state.isWhiteTurn());
 
-                if (isKingInCheck(nextState, !state.isWhiteTurn())) {
+                if (isKingInCheck(nextState, !state.isWhiteTurn())) { // Check opponent's king
                     move.setCheck(true);
                     // Check for mate
                     if (hasNoLegalMoves(nextState)) {
@@ -89,27 +94,23 @@ public class RuleEngine{
         }
 
         // 1. Get all pseudo-legal moves (ignoring check)
-        Set<Position> pseudoLegalTargets = piece.getPossiblyLegalMoves(state.getBoard(), piecePos);
+        Set<Position> targets = piece.getPossiblyLegalMoves(state.getBoard(), piecePos);
 
         // 2. Filter for self-check
-        for (Position targetPos : pseudoLegalTargets) {
+        for (Position targetPos : targets) {
             Move move = new Move(piecePos, targetPos, piece);
 
-            // Handle pawn promotion (it's a possibly-legal move)
-            if (piece.getType() == PieceType.PAWN && (targetPos.row() == 0 || targetPos.row() == 7)) {
-                move.setPromotion(true);
-            }
-
+            // Check if move puts OWN king in check
             if (isMoveSafe(state, move)) {
                 legalMoves.add(move);
             }
         }
 
         // 3. Add special moves
-        if (piece.getType() == PieceType.PAWN) {
-            addEnPassantMoves(state, piecePos, legalMoves);
-        } else if (piece.getType() == PieceType.KING) {
+        if (piece.getType() == PieceType.KING) {
             addCastlingMoves(state, piecePos, legalMoves);
+        } else if (piece.getType() == PieceType.PAWN) {
+            addEnPassantMoves(state, piecePos, legalMoves);
         }
 
         return legalMoves;
@@ -122,7 +123,9 @@ public class RuleEngine{
      * @return true if the move is safe, false if it results in self-check.
      */
     private boolean isMoveSafe(GameState state, Move move) {
+        // Create a temporary board with the move applied
         Board simulatedBoard = simulateMove(state.getBoard(), move);
+        // Checking if the CURRENT player's king is in check on the new board
         return !isKingInCheck(simulatedBoard, state.isWhiteTurn());
     }
 
@@ -134,7 +137,7 @@ public class RuleEngine{
         if (kingPos == null) {
             return false; // Should not happen
         }
-        return isPositionAttacked(board, kingPos, !isWhiteKing);
+        return isSquareAttacked(board, kingPos, !isWhiteKing);
     }
 
     //public for Checkmate/Stalemate
@@ -145,7 +148,7 @@ public class RuleEngine{
     /**
      * Checks if a specific square is attacked by any piece of the 'attacker' colour.
      */
-    private boolean isPositionAttacked(Board board, Position targetPos, boolean byWhiteAttacker) {
+    private boolean isSquareAttacked(Board board, Position targetPos, boolean byWhiteAttacker) {
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
                 Position attackerPos = new Position(r, c);
@@ -153,8 +156,7 @@ public class RuleEngine{
 
                 if (attacker != null && attacker.isWhite() == byWhiteAttacker) {
                     // Check if this attacker's possibly-legal moves include the target
-                    Set<Position> moves = attacker.getPossiblyLegalMoves(board, attackerPos);
-                    if (moves.contains(targetPos)) {
+                    if (attacker.getPossiblyLegalMoves(board, attackerPos).contains(targetPos)) {
                         return true;
                     }
                 }
@@ -229,8 +231,8 @@ public class RuleEngine{
 
             if (!board.isOccupied(f_sq) && !board.isOccupied(g_sq)) {
                 // Cannot castle through check
-                if (!isPositionAttacked(board, f_sq, !isWhite) &&
-                        !isPositionAttacked(board, g_sq, !isWhite)) {
+                if (!isSquareAttacked(board, f_sq, !isWhite) &&
+                        !isSquareAttacked(board, g_sq, !isWhite)) {
 
                     Move castleMove = new Move(kingPos, g_sq, board.getPieceAt(kingPos));
                     castleMove.setCastling(true);
@@ -248,8 +250,8 @@ public class RuleEngine{
 
             if (!board.isOccupied(b_sq) && !board.isOccupied(c_sq) && !board.isOccupied(d_sq)) {
                 // Cannot castle through check
-                if (!isPositionAttacked(board, c_sq, !isWhite) &&
-                        !isPositionAttacked(board, d_sq, !isWhite)) {
+                if (!isSquareAttacked(board, c_sq, !isWhite) &&
+                        !isSquareAttacked(board, d_sq, !isWhite)) {
 
                     Move castleMove = new Move(kingPos, c_sq, board.getPieceAt(kingPos));
                     castleMove.setCastling(true);
