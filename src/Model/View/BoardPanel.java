@@ -12,15 +12,15 @@ import Model.Pieces.*;
 public class BoardPanel extends JPanel{
     public static final int TILE_SIZE = 80;
 
-    // --- State variables managed by the Controller ---
+    //State variables managed by the Controller
     private Board currentBoard;
     private Set<Position> validMoves;
     private Position selectedPosition;
 
-    // --- Viewpoint variable ---
+    //Viewpoint variable
     private boolean isViewFromWhiteSide = true; // Default to White's view
 
-    // --- Drag-and-Drop GUI state ---
+    //Drag-and-Drop GUI state
     private Piece draggedPiece;
     private Point dragPosition;
 

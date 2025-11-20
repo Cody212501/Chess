@@ -122,7 +122,7 @@ public class PGNFormatter{
     private String generateSanForMove(Move move) {
         Piece piece = move.getPieceMoved();
 
-        // --- 1. Handle Castling (Special Case) ---
+        //1. Handle Castling (Special Case)
         // We rely on the move being tagged.
         if (move.isCastling()) {
             // Kingside (short) castle
@@ -133,11 +133,11 @@ public class PGNFormatter{
 
         StringBuilder san = new StringBuilder();
 
-        // --- 2. Piece Symbol (e.g., "N", "B", "Q". Pawns are empty) ---
+        //2. Piece Symbol (e.g., "N", "B", "Q". Pawns are empty)
         String pieceSymbol = getPgnPieceSymbol(piece);
         san.append(pieceSymbol);
 
-        // --- 3. Handle Captures (e.g., "x") ---
+        //3. Handle Captures (e.g., "x")
         boolean isCapture = (move.getPieceCaptured() != null);
 
         if (isCapture && piece.getType() == PieceType.PAWN) {
@@ -145,7 +145,7 @@ public class PGNFormatter{
             san.append(getFileChar(move.getFrom().column()));
         }
 
-        // --- 4. Disambiguation (The Hardest Part) ---
+        //4. Disambiguation (The Hardest Part)
         // If it's not a pawn, we check if another identical piece
         // could have moved to the same square.
         if (piece.getType() != PieceType.PAWN) {
@@ -153,20 +153,20 @@ public class PGNFormatter{
             san.append(disambiguation);
         }
 
-        // --- 5. Add Capture 'x' ---
+        //5. Add Capture 'x'
         if (isCapture) {
             san.append("x");
         }
 
-        // --- 6. Target Square (e.g., "f3", "d5") ---
+        //6. Target Square (e.g., "f3", "d5")
         san.append(positionToNotation(move.getTo()));
 
-        // --- 7. Promotion (e.g., "=Q") ---
+        //7. Promotion (e.g., "=Q")
         if (move.isPromotion()) {
             san.append("=").append(getPgnPieceSymbol(move.getPromotionPiece()));
         }
 
-        // --- 8. Check/Checkmate (e.g., "+", "#") ---
+        //8. Check/Checkmate (e.g., "+", "#")
         san.append(getCheckOrMateSymbol(move));
 
         return san.toString();

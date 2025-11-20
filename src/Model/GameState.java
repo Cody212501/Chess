@@ -42,7 +42,7 @@ public class GameState{
         // It's mainly for check detection.
     }
 
-    // --- GETTERS ---
+    //GETTERS
     public Board getBoard() { return board; }
     public boolean isWhiteTurn() { return isWhiteTurn; }
     public List<Move> getMoveHistory() { return moveHistory; }

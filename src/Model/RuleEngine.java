@@ -37,15 +37,14 @@ public class RuleEngine{
         for (Move move : legalMoves) {
             if (move.getTo().equals(to)) {
 
-                // --- PROMOTION ---
+                //PROMOTION
                 // If it's a promotion, we must ask the user what piece they want.
                 // We set the piece to Queen by default, GameController can override.
                 if (move.isPromotion()) {
-                    // TODO: The GameController should pop up a dialog and then call move.setPromotionPiece(...)
                     move.setPromotionPiece(new Queen(state.isWhiteTurn()));
                 }
 
-                // --- TAG CHECK/MATE ---
+                //CHECK/MATE detection
                 // Before returning, simulate this move and see if it puts the
                 // *opponent* in check or checkmate.
                 Board nextBoard = simulateMove(state.getBoard(), move);
@@ -265,34 +264,9 @@ public class RuleEngine{
      * This is vital for simulation.
      */
     private Board simulateMove(Board original, Move move) {
-        Board simBoard = original.deepCopy(); // TODO: Requires deepCopy in Board.java!
-
-        Position from = move.getFrom();
-        Position to = move.getTo();
-        Piece piece = simBoard.getPieceAt(from); // Get piece from *simulated* board
-
-        // Perform the move
-        simBoard.setPieceAt(to, piece);
-        simBoard.setPieceAt(from, null);
-
-        // Handle special sim cases
-        if (move.isEnPassant()) {
-            int capturedPawnRow = move.getTo().row() + (piece.isWhite() ? 1 : -1);
-            Position capturedPawnPos = new Position(capturedPawnRow, move.getTo().column());
-            simBoard.setPieceAt(capturedPawnPos, null);
-        }
-        if (move.isCastling()) {
-            if (move.getTo().column() == 6) { // Kingside
-                simBoard.setPieceAt(new Position(from.row(), 5), simBoard.getPieceAt(new Position(from.row(), 7)));
-                simBoard.setPieceAt(new Position(from.row(), 7), null);
-            } else { // Queenside
-                simBoard.setPieceAt(new Position(from.row(), 3), simBoard.getPieceAt(new Position(from.row(), 0)));
-                simBoard.setPieceAt(new Position(from.row(), 0), null);
-            }
-        }
-        if (move.isPromotion()) {
-            simBoard.setPieceAt(to, move.getPromotionPiece() != null ? move.getPromotionPiece() : new Queen(piece.isWhite()));
-        }
+        Board simBoard = original.deepCopy();
+        //Uses the logic in Board.java to handle flags
+        simBoard.applyMove(move);
 
         return simBoard;
     }

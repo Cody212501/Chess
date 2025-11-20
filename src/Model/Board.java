@@ -83,7 +83,7 @@ public class Board{
         Position to = move.getTo();
         Piece piece = move.getPieceMoved();
 
-        // 1. Standard Move
+        // 1. Standard Move, with capture
         Piece capturedPiece = getPieceAt(to);
         if (capturedPiece != null) {
             move.setPieceCaptured(capturedPiece);
@@ -91,16 +91,15 @@ public class Board{
         setPieceAt(to, piece);
         setPieceAt(from, null);
 
-        // --- 2. Handle Special Moves ---
+        //2. Handle Special Moves
         if (move.isCastling()) {
-            // King already moved from (e,g) or (e,c)
-            // We just need to move the rook.
-            if (to.column() == 6) { // Kingside (g-file)
+            // King already moved from, we just need to move the rook as well.
+            if (to.column() == 6) { // Kingside castling (g-file)
                 Position rookFrom = new Position(from.row(), 7); // h-file
                 Position rookTo = new Position(from.row(), 5); // f-file
                 setPieceAt(rookTo, getPieceAt(rookFrom));
                 setPieceAt(rookFrom, null);
-            } else if (to.column() == 2) { // Queenside (c-file)
+            } else if (to.column() == 2) { // Queenside castling (c-file)
                 Position rookFrom = new Position(from.row(), 0); // a-file
                 Position rookTo = new Position(from.row(), 3); // d-file
                 setPieceAt(rookTo, getPieceAt(rookFrom));

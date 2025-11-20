@@ -58,7 +58,7 @@ public class NewGameDialog extends JDialog{
         blackEloSpinner = new JSpinner(new SpinnerNumberModel(1200, 400, 3000, 100));
         formPanel.add(blackEloSpinner, gbc);
 
-        // --- Timer Settings ---
+        //Timer Settings
         gbc.gridx = 0; gbc.gridy = 4;
         timerCheckBox = new JCheckBox("Időzítő használata");
         formPanel.add(timerCheckBox, gbc);
@@ -79,7 +79,7 @@ public class NewGameDialog extends JDialog{
         // Add listener to checkbox
         timerCheckBox.addActionListener(e -> enableTimerFields(timerCheckBox.isSelected()));
 
-        // --- OK / Cancel Buttons ---
+        //OK / Cancel Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton okButton = new JButton("OK");
         JButton cancelButton = new JButton("Cancel");

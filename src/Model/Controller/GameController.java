@@ -167,8 +167,7 @@ public class GameController{
             case "Bishop": return new Bishop(isWhite);
             case "Knight": return new Knight(isWhite);
             case "Queen":
-            default:
-                return new Queen(isWhite);
+            default: return new Queen(isWhite);
         }
     }
 
@@ -249,8 +248,10 @@ public class GameController{
                 GameState newState = pgnParser.importGame(file.getPath());
                 this.gameState = newState;
                 this.isGameInProgress = true;
+
+                // Assuming successful load means game is active
                 refreshAllViews();
-                JOptionPane.showMessageDialog(mainFrame, "PGN imprt successful!");
+                JOptionPane.showMessageDialog(mainFrame, "PGN import successful!");
             } catch (Exception e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(mainFrame, "Hiba PGN importálás közben:\n" + e.getMessage(), "Import Hiba", JOptionPane.ERROR_MESSAGE);
