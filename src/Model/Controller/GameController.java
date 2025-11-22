@@ -303,18 +303,28 @@ public class GameController{
     private void refreshAllViews(){
         if (gameState == null) return;
 
-        // If it's a new turn and not check, clear red highlight
-        if (!ruleEngine.isKingInCheck(gameState, gameState.isWhiteTurn())) {
+        // 1. Update Board Logic (Rotation)
+        boardPanel.setViewpoint(gameState.isWhiteTurn());
+
+        // 2. Update Board Pieces
+        boardPanel.updateBoard(gameState.getBoard());
+
+        // 3. Check/Mate Visuals
+        // IMPORTANT: Check if CURRENT player (who is about to move) is in check
+        if (ruleEngine.isKingInCheck(gameState, gameState.isWhiteTurn())) {
+            Position kingPos = findKingPos(gameState.isWhiteTurn());
+            boardPanel.setKingInCheck(kingPos);
+        } else {
             boardPanel.setKingInCheck(null);
         }
 
-        // Tell the board panel who the current player is so it can rotate
-        boardPanel.setViewpoint(gameState.isWhiteTurn());
-
-        boardPanel.updateBoard(gameState.getBoard());
+        // 4. Update Side Panel
         sidePanel.updateMoveHistory(gameState.getMoveHistory());
         sidePanel.updatePlayerInfo(gameState.getWhitePlayer(), gameState.getBlackPlayer());
         sidePanel.updatePlayerTurn(gameState.isWhiteTurn());
+
+        // 5. Repaint
+        boardPanel.repaint();
     }
 
     public GameState getGameState(){ return gameState; }

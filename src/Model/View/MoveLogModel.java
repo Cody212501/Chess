@@ -73,6 +73,12 @@ public class MoveLogModel extends AbstractTableModel{
      * (e.g., "e4" or "Nf3"), which is much more complex.
      */
     private String formatSan(Move move) {
+        //castling move
+        if (move.isCastling()) {
+            boolean kingside = move.getTo().column() == 6;
+            return (kingside ? "O-O" : "O-O-O") + getCheckSymbol(move);
+        }
+
         // Simple PGN/SAN formatter for display
         StringBuilder sb = new StringBuilder();
 
@@ -99,11 +105,16 @@ public class MoveLogModel extends AbstractTableModel{
             sb.append("=").append(getPieceChar(move.getPromotionPiece().getType()));
         }
 
-        // 6. Check/Mate
-        if (move.isCheckmate()) sb.append("#");
-        else if (move.isCheck()) sb.append("+");
+        // 6. Check or Mate
+        sb.append(getCheckSymbol(move));
 
         return sb.toString();
+    }
+
+    private String getCheckSymbol(Move move) {
+        if (move.isCheckmate()) return "#";
+        if (move.isCheck()) return "+";
+        return "";
     }
 
     private String getPieceChar(PieceType type) {

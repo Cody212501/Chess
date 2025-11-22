@@ -2,6 +2,7 @@ package Model.View;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.*;
 import java.io.*;
 import javax.imageio.*;
@@ -51,7 +52,7 @@ public class BoardPanel extends JPanel{
      */
     public void setViewpoint(boolean isWhiteTurn) {
         this.isViewFromWhiteSide = isWhiteTurn;
-        this.repaint(); // Redraw the board in its new orientation
+        repaint(); // Redraw the board in its new orientation
     }
 
     public void setKingInCheck(Position pos) {
@@ -67,34 +68,41 @@ public class BoardPanel extends JPanel{
      * @return The corresponding Position in the logical model.
      */
     public Position getModelPosition(int viewRow, int viewCol) {
-        // Adjust for margin
-        int x = (viewRow - MARGIN) / TILE_SIZE;
-        int y = (viewCol - MARGIN) / TILE_SIZE;
+        // Convert raw pixel coordinates (relative to this panel) to model Position (row,column)
 
-        if (x < 0 || x > 7 || y < 0 || y > 7){
+        // 1) Adjust for margin
+        int x = (viewRow - MARGIN);
+        int y = (viewCol - MARGIN);
+
+        // 2) are we within the confines of the board?
+        if (x < 0 || x >= 8 * TILE_SIZE || y < 0 || y >= 8 * TILE_SIZE){
             return new Position(-1, -1);
         }
 
+        // 3) Convert to view indices (0-7)
+        int viewingColumn = x / TILE_SIZE; // horizontal
+        int viewingRow = y / TILE_SIZE; // vertical
+
+
+        // 4) Map view indices to model indices depending on viewpoint orientation
         if (isViewFromWhiteSide) {
             // If White's view, coordinates are the same, as in the source code
-            return new Position(viewRow, viewCol);
+            return new Position(viewingRow, viewingColumn);
         } else {
             // If Black's view, the board is flipped
             // View row 0 is Model row 7
             // View col 0 is Model col 7
-            return new Position(7 - viewRow, 7 - viewCol);
+            return new Position(7 - viewingRow, 7 - viewingColumn);
         }
     }
 
     /**
-     * Translates a "Model" coordinate (from Board.java)
-     * to a "View" coordinate (for drawing on the panel).
-     * @param modelPos The logical position from the model.
-     * @return A Point(x, y) for drawing.
+     * Model Position -> Screen Coordinate (relative to grid top-left)
+     * Does NOT include MARGIN! (Because we use g2.translate)
      */
-    private Point getViewCoordinates(Position modelPos) {
-        int viewRow;
-        int viewCol;
+    private Point getRelativeScreenCoordinates(Position modelPos) {
+        int viewRow, viewCol;
+
         if (isViewFromWhiteSide) {
             viewRow = modelPos.row();
             viewCol = modelPos.column();
@@ -102,7 +110,8 @@ public class BoardPanel extends JPanel{
             viewRow = 7 - modelPos.row();
             viewCol = 7 - modelPos.column();
         }
-        return new Point(viewCol * TILE_SIZE + MARGIN, viewRow * TILE_SIZE + MARGIN);
+
+        return new Point(viewCol * TILE_SIZE, viewRow * TILE_SIZE);
     }
 
     /**
@@ -117,16 +126,18 @@ public class BoardPanel extends JPanel{
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        // 1. Draw Coordinates (outside the translated grid)
         drawCoordinates(g2);
 
-        // Translate grid to account for margin
+        // 2. Translate grid to accounting for margin
         g2.translate(MARGIN, MARGIN);
 
-        // Iterate over the VIEW (panel)
+        // 3. Draw Board & Pieces by iterating over the VIEW (panel)
         for (int viewRow = 0; viewRow < 8; viewRow++) {
             for (int viewCol = 0; viewCol < 8; viewCol++) {
                 // Get the corresponding MODEL position for this view square
-                Position modelPos = getModelPosition(viewRow, viewCol);
+                Position modelPos = isViewFromWhiteSide ?
+                        new Position(viewRow, viewCol) : new Position(7 - viewRow, 7 - viewCol);
 
                 int x = viewCol * TILE_SIZE;
                 int y = viewRow * TILE_SIZE;
@@ -141,14 +152,7 @@ public class BoardPanel extends JPanel{
 
                 // 2. Highlight King in Check (Red Background)
                 if (kingInCheckPos != null && kingInCheckPos.equals(modelPos)) {
-                    g2.setColor(new Color(255, 0, 0, 150));
-                    // Create a radial gradient for nicer look
-                    RadialGradientPaint rgp = new RadialGradientPaint(
-                            new Point(x + TILE_SIZE/2, y + TILE_SIZE/2),
-                            TILE_SIZE/2,
-                            new float[]{0f, 1f},
-                            new Color[]{new Color(255, 60, 60, 200), new Color(200, 0, 0, 0)});
-                    g2.setPaint(rgp);
+                    g2.setColor(new Color(255, 0, 0, 180));
                     g2.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 }
 
@@ -233,6 +237,66 @@ public class BoardPanel extends JPanel{
         repaint();
     }
 
+    private void drawCoordinates(Graphics2D g2) {
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("SansSerif", Font.BOLD, 14));
+        FontMetrics fm = g2.getFontMetrics();
+
+        for (int i = 0; i < 8; i++) {
+            // Rows (1-8)
+            String rowStr = isViewFromWhiteSide ? String.valueOf(8 - i) : String.valueOf(i + 1);
+            int y = MARGIN + i * TILE_SIZE + TILE_SIZE/2 + fm.getAscent()/2;
+            g2.drawString(rowStr, MARGIN/2 - fm.stringWidth(rowStr)/2, y);
+
+            // Columns (A-H)
+            String colStr = isViewFromWhiteSide ? String.valueOf((char)('a' + i)) : String.valueOf((char)('h' - i));
+            int x = MARGIN + i * TILE_SIZE + TILE_SIZE/2 - fm.stringWidth(colStr)/2;
+            g2.drawString(colStr, x, 8 * TILE_SIZE + MARGIN + MARGIN/2 + fm.getAscent()/2);
+        }
+    }
+
+    private void drawSelectedSquare(Graphics2D g2) {
+        if (selectedPosition != null) {
+            Point p = getRelativeScreenCoordinates(selectedPosition);
+            // Point already includes Margin because getViewCoordinates adds it.
+            // BUT we are inside a g2.translate(MARGIN, MARGIN) block, so we must subtract margin here.
+            g2.setColor(new Color(255, 255, 0, 100)); // Transparent Yellow
+            g2.fillRect(p.x, p.y, TILE_SIZE, TILE_SIZE);
+        }
+    }
+
+    private void drawValidMoves(Graphics2D g2) {
+        g2.setColor(new Color(139, 134, 128, 80)); // Transparent grey
+
+        for (Position modelPos : validMoves) {
+            Point p = getRelativeScreenCoordinates(modelPos);
+
+            Piece targetPiece = currentBoard.getPieceAt(modelPos);
+
+            if (targetPiece != null) {
+                // Capture: Yellow corners or full background highlight
+                g2.setColor(new Color(255, 100, 0, 150)); // Orange/Reddish ring
+                g2.fillRect(p.x, p.y, TILE_SIZE, TILE_SIZE);
+            } else {
+                // Move: Grey circle
+                g2.setColor(new Color(100, 100, 100, 128));
+                int radius = TILE_SIZE / 6;
+                g2.fillOval(p.x + TILE_SIZE/2 - radius, p.y + TILE_SIZE/2 - radius, radius * 2, radius * 2);
+            }
+        }
+    }
+
+    private void drawDraggedPiece(Graphics2D g2) {
+        if (draggedPiece != null && dragPosition != null) {
+            // This is drawn at the raw mouse coordinate, no translation needed
+            int x = dragPosition.x - TILE_SIZE / 2;
+            int y = dragPosition.y - TILE_SIZE / 2;
+
+            //Adjusting for drawString offset
+            drawPieceAt(g2, draggedPiece, x, y);
+        }
+    }
+
     /**
      * Loads all chess piece images into a cache.
      * This prevents reloading the same image multiple times, improving performance.
@@ -244,25 +308,25 @@ public class BoardPanel extends JPanel{
         for (String color : colors) {
             for (String type : types) {
                 String fileName = color + type + ".jpg";
-                String resourcePath = IMAGE_PATH_PREFIX + fileName;
+                String path = IMAGE_PATH_PREFIX + fileName;
                 try {
                     /**
                      *  Use getResource() for loading from JAR (deployed app) or file system (IDE development)
                      *  Image img = ImageIO.read(Objects.requireNonNull(
                      *      getClass().getResource(IMAGE_PATH_PREFIX + fileName),
                      *       "Image not found: " + IMAGE_PATH_PREFIX + fileName
-                    *));
+                     *));
                      */
 
                     // FIX(hopefully): getClass().getResource expects path from root of classpath
-                    java.net.URL imgURL = getClass().getResource(resourcePath);
-                    if (imgURL == null) {
-                        System.err.println("Image not found: " + resourcePath);
+                    URL url = getClass().getResource(path);
+                    if (url == null) {
+                        System.err.println("Image not found: " + path);
                         continue;
                     }
 
-                    Image img = ImageIO.read(imgURL);
-                    System.out.println("Image " + fileName +" found at: " + resourcePath);
+                    Image img = ImageIO.read(url);
+                    System.out.println("Image " + fileName +" found at: " + path);
                     pieceImages.put(fileName, img.getScaledInstance(TILE_SIZE, TILE_SIZE, Image.SCALE_SMOOTH));
                     System.out.println("Image loaded!");
 
@@ -272,35 +336,6 @@ public class BoardPanel extends JPanel{
                     System.err.println(e.getMessage());
                 }
             }
-        }
-    }
-
-    /**
-     * Returns the appropriate image for a given piece.
-     * @param piece The piece for which to get the image.
-     * @return The scaled Image object, or null if not found.
-     */
-    private Image getPieceImage(Piece piece) {
-        if (piece == null) return null;
-        String fileName = (piece.isWhite() ? "White" : "Black") + piece.getType().name() + ".jpg";
-        return pieceImages.get(fileName);
-    }
-
-    private void drawCoordinates(Graphics2D g2) {
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("SansSerif", Font.BOLD, 14));
-        FontMetrics fm = g2.getFontMetrics();
-
-        for (int i = 0; i < 8; i++) {
-            // Rows (1-8)
-            String rowLabel = isViewFromWhiteSide ? String.valueOf(8 - i) : String.valueOf(i + 1);
-            int yPos = MARGIN + i * TILE_SIZE + TILE_SIZE / 2 + fm.getAscent() / 2 - 2;
-            g2.drawString(rowLabel, MARGIN / 2 - fm.stringWidth(rowLabel) / 2, yPos);
-
-            // Columns (A-H)
-            String colLabel = isViewFromWhiteSide ? String.valueOf((char)('a' + i)) : String.valueOf((char)('h' - i));
-            int xPos = MARGIN + i * TILE_SIZE + TILE_SIZE / 2 - fm.stringWidth(colLabel) / 2;
-            g2.drawString(colLabel, xPos, getHeight() - MARGIN / 2 + fm.getAscent() / 2 - 2);
         }
     }
 
@@ -318,63 +353,28 @@ public class BoardPanel extends JPanel{
             // Fallback: Draw Unicode Chess Symbols if image fails (unless something goes awry[e.g: failed download of repo], this is never used)
             g2.setColor(piece.isWhite() ? Color.WHITE : Color.BLACK);
             // Draw text outline for visibility
-            g2.setFont(new Font("SansSerif", Font.BOLD, 60));
-            String symbol = getPieceSymbol(piece);
+            g2.setFont(new Font("SansSerif", Font.BOLD, 40));
+            String s = getPieceSymbol(piece);
             FontMetrics fm = g2.getFontMetrics();
-            int textX = x + (TILE_SIZE - fm.stringWidth(symbol)) / 2;
-            int textY = y + (TILE_SIZE - fm.getHeight()) / 2 + fm.getAscent();
+            int tx = x + (TILE_SIZE - fm.stringWidth(s)) / 2;
+            int ty = y + (TILE_SIZE - fm.getHeight()) / 2 + fm.getAscent();
 
-            g2.drawString(symbol, textX, textY);
+            g2.drawString(s, tx, ty);
         }
     }
 
-    private void drawSelectedSquare(Graphics2D g2) {
-        if (selectedPosition != null) {
-            Point p = getViewCoordinates(selectedPosition);
-            // Point already includes Margin because getViewCoordinates adds it.
-            // BUT we are inside a g2.translate(MARGIN, MARGIN) block, so we must subtract margin here.
-            g2.setColor(new Color(255, 255, 0, 100));
-            g2.fillRect(p.x - MARGIN, p.y - MARGIN, TILE_SIZE, TILE_SIZE);
-        }
+    /**
+     * Returns the appropriate image for a given piece.
+     * @param piece The piece for which to get the image.
+     * @return The scaled Image object, or null if not found.
+     */
+    private Image getPieceImage(Piece piece) {
+        if (piece == null) return null;
+        String fileName = (piece.isWhite() ? "White" : "Black") + piece.getType().name() + ".jpg";
+        return pieceImages.get(fileName);
     }
 
-    private void drawValidMoves(Graphics2D g2) {
-        g2.setColor(new Color(139, 134, 128, 80)); // Transparent grey
-
-        for (Position modelPos : validMoves) {
-            Point viewPoint = getViewCoordinates(modelPos);
-            // Remove margin due to translation context
-            int x = viewPoint.x - MARGIN;
-            int y = viewPoint.y - MARGIN;
-
-            Piece targetPiece = currentBoard.getPieceAt(modelPos);
-
-            if (targetPiece != null) {
-                // Capture: Yellow corners or full background highlight
-                g2.setColor(new Color(255, 100, 0, 150)); // Orange/Reddish ring
-                int stroke = 6;
-                g2.setStroke(new BasicStroke(stroke));
-                g2.drawRect(x + stroke/2, y + stroke/2, TILE_SIZE - stroke, TILE_SIZE - stroke);
-            } else {
-                // Move: Grey circle
-                g2.setColor(new Color(100, 100, 100, 128));
-                int radius = TILE_SIZE / 6;
-                g2.fillOval(x + TILE_SIZE/2 - radius, y + TILE_SIZE/2 - radius, radius * 2, radius * 2);
-            }
-        }
-    }
-
-    private void drawDraggedPiece(Graphics2D g2) {
-        if (draggedPiece != null && dragPosition != null) {
-            // This is drawn at the raw mouse coordinate, no translation needed
-            int x = dragPosition.x - TILE_SIZE / 2;
-            int y = dragPosition.y - TILE_SIZE / 2;
-
-            //Adjusting for drawString offset
-            drawPieceAt(g2, draggedPiece, x - 25, y - 50);
-        }
-    }
-
+    //fallback option just in case
     private String getPieceSymbol(Piece piece) {
         if (piece == null){
             return "?";

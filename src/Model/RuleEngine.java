@@ -100,17 +100,22 @@ public class RuleEngine{
         for (Position targetPos : targets) {
             Move move = new Move(piecePos, targetPos, piece);
 
-            // Check if move puts OWN king in check
+            // En Passant validation
+            if (piece.getType() == PieceType.PAWN
+                    && Math.abs(piecePos.column() - targetPos.column()) == 1
+                    && state.getBoard().getPieceAt(targetPos) == null) {
+                move.setEnPassant(true);
+            }
+
+            // Check if move doesn't put OWN king in check
             if (isMoveSafe(state, move)) {
                 legalMoves.add(move);
             }
         }
 
-        // 3. Add special moves
+        // 3. Add castling moves
         if (piece.getType() == PieceType.KING) {
             addCastlingMoves(state, piecePos, legalMoves);
-        } else if (piece.getType() == PieceType.PAWN) {
-            addEnPassantMoves(state, piecePos, legalMoves);
         }
 
         return legalMoves;
@@ -125,7 +130,7 @@ public class RuleEngine{
     private boolean isMoveSafe(GameState state, Move move) {
         // Create a temporary board with the move applied
         Board simulatedBoard = simulateMove(state.getBoard(), move);
-        // Checking if the CURRENT player's king is in check on the new board
+        // Checking if player's OWN king is/would be in check on the new board
         return !isKingInCheck(simulatedBoard, state.isWhiteTurn());
     }
 
@@ -137,10 +142,11 @@ public class RuleEngine{
         if (kingPos == null) {
             return false; // Should not happen
         }
+        //inspecting, if any enemy piece is attacking our king
         return isSquareAttacked(board, kingPos, !isWhiteKing);
     }
 
-    //public for Checkmate/Stalemate
+    //public for Checkmate/Stalemate checks
     public boolean isKingInCheck(GameState state, boolean isWhiteKing) {
         return isKingInCheck(state.getBoard(), isWhiteKing);
     }
@@ -179,35 +185,6 @@ public class RuleEngine{
             }
         }
         return null; // Should never happen in any real game
-    }
-
-    /**
-     * Checks for and adds En Passant moves to the list.
-     */
-    private void addEnPassantMoves(GameState state, Position pawnPos, Set<Move> legalMoves) {
-        Position epTarget = state.getEnPassantTargetSquare();
-        if (epTarget == null) {
-            return;
-        }
-
-        Piece pawn = state.getBoard().getPieceAt(pawnPos);
-        if (pawn == null || pawn.getType() != PieceType.PAWN) {
-            return;
-        }
-
-        // Check if this pawn can perform the en passant capture
-        if (Math.abs(pawnPos.column() - epTarget.column()) == 1) {
-            int expectedRow = pawn.isWhite() ? 3 : 4;
-            if (pawnPos.row() == expectedRow) {
-                Move epMove = new Move(pawnPos, epTarget, pawn);
-                epMove.setEnPassant(true);
-
-                // Must still check if this move puts the king in check
-                if (isMoveSafe(state, epMove)) {
-                    legalMoves.add(epMove);
-                }
-            }
-        }
     }
 
     /**
@@ -294,12 +271,10 @@ public class RuleEngine{
     }
 
     /**
-     * Public Checkmate/Stalemate detectors
+     * Public Stalemate detector
+     * Stalemate occures, when a player should make a move, but is unable to do so,
+     * while they are not being in check.
      */
-    public boolean isCheckmate(GameState state) {
-        return isKingInCheck(state, state.isWhiteTurn()) && hasNoLegalMoves(state);
-    }
-
     public boolean isStalemate(GameState state) {
         return !isKingInCheck(state, state.isWhiteTurn()) && hasNoLegalMoves(state);
     }

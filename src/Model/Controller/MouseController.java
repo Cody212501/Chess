@@ -24,6 +24,9 @@ public class MouseController extends MouseAdapter{
     //For drag-and-drop logic
     private Position dragStartModelPos = null;
 
+    //flag for deselecting on second click
+    private boolean clickingSelectedPiece = false;
+
     public MouseController(GameController gameController, BoardPanel boardPanel){
         this.gameController = gameController;
         this.boardPanel = boardPanel;
@@ -38,22 +41,64 @@ public class MouseController extends MouseAdapter{
             return;
         }
 
-        // 1. Get VIEW coordinates from mouse
-        int viewColumn = e.getX() / BoardPanel.TILE_SIZE;
-        int viewRow = e.getY() / BoardPanel.TILE_SIZE;
+        // Reset flag
+        clickingSelectedPiece = false;
 
-        // 2. Translate VIEW coordinates to MODEL coordinates
-        Position modelClickPos = boardPanel.getModelPosition(viewRow, viewColumn);
+        // 1. Convert click to Model Position
+        Position modelPos = boardPanel.getModelPosition(e.getX(), e.getY());
 
-        if (!modelClickPos.isOnBoard()){
+        if (!modelPos.isOnBoard()) {
+            // Clicked outside board (e.g. margin) -> deselect
+            selectedModelPos = null;
+            boardPanel.clearSelections();
             return;
         }
 
-        // 3. Store the MODEL position for the drag
-        dragStartModelPos = modelClickPos;
+        // 2. Check if we clicked a piece
+        Piece clickedPiece = gameController.getGameState().getBoard().getPieceAt(modelPos);
+        boolean isMyTurn = (clickedPiece != null && clickedPiece.isWhite() == gameController.getGameState().isWhiteTurn());
 
-        // Start the visual drag (this uses the *raw* mouse point)
-        boardPanel.startDrag(modelClickPos, e.getPoint());
+        // 3. Handle Logic
+        if (selectedModelPos == null) {
+            // No previous selection -> Select this piece if it's ours
+            if (isMyTurn) {
+                selectPiece(modelPos);
+                // Also start dragging
+                dragStartModelPos = modelPos;
+                boardPanel.startDrag(modelPos, e.getPoint());
+            }
+        } else {
+            // We already have a selection
+            if (modelPos.equals(selectedModelPos)) {
+                // Clicked same piece -> deselect
+                clickingSelectedPiece = true;
+
+                // Let's also re-drag.
+                dragStartModelPos = modelPos;
+                boardPanel.startDrag(modelPos, e.getPoint());
+            } else {
+                // Clicked different square -> Move attempt(foe) OR Select new piece(friendly)
+                if (isMyTurn) {
+                    // Clicked another friendly piece -> Change selection
+                    selectPiece(modelPos);
+                    dragStartModelPos = modelPos;
+                    boardPanel.startDrag(modelPos, e.getPoint());
+                } else {
+                    // Clicked empty or enemy -> Move attempt
+                    gameController.handleMoveAttempt(selectedModelPos, modelPos);
+                    selectedModelPos = null;
+                    dragStartModelPos = null;
+                    boardPanel.clearSelections();
+                }
+            }
+        }
+    }
+
+    private void selectPiece(Position pos) {
+        selectedModelPos = pos;
+        boardPanel.setSelectedPosition(pos);
+        Set<Position> moves = gameController.getValidMovesForPiece(pos);
+        boardPanel.showValidMoves(moves);
     }
 
     /**
@@ -76,74 +121,33 @@ public class MouseController extends MouseAdapter{
             return; //In the unlikely event we didn't initiate the drag, ignore it
         }
 
-        // 1. Get VIEW coordinates from mouse release
-        int viewColumn = e.getX() / BoardPanel.TILE_SIZE;
-        int viewRow = e.getY() / BoardPanel.TILE_SIZE;
-
-        // 2. Translate VIEW coordinates to MODEL coordinates
-        Position modelReleasePos = boardPanel.getModelPosition(viewRow, viewColumn);
-
-        //Finalise the visual drag (hides the dragged piece)
+        Position releasePos = boardPanel.getModelPosition(e.getX(), e.getY());
         boardPanel.stopDrag();
 
-        // 3. Use MODEL positions for all logic
-        if (modelReleasePos.isOnBoard()) {
-            if (!dragStartModelPos.equals(modelReleasePos)) {
-                // Case 1: DRAG-AND-DROP
-                gameController.handleMoveAttempt(dragStartModelPos, modelReleasePos);
-            } else {
-                // Case 2: CLICK
-                handleBoardClick(modelReleasePos);
-            }
-        }
+        // 1. DRAG-AND-DROP: Released on a different square
+        if (releasePos.isOnBoard() && !releasePos.equals(dragStartModelPos)) {
+            // Drag ended on a different valid square -> Move attempt
+            gameController.handleMoveAttempt(dragStartModelPos, releasePos);
 
-        //Whatever happened, the drag operation is over
-        dragStartModelPos = null;
-
-        //If it was a drag-and-drop, clear selection.
-        //If it was a click, let handleBoardClick manage the selection.
-        if (!modelReleasePos.equals(dragStartModelPos)) {
+            // After a drag-move attempt, we usually clear selection
             selectedModelPos = null;
             boardPanel.clearSelections();
         }
-    }
-
-    /**
-     * Separate function for "click-to-move" logic.
-     * @param modelClickPos The square the user clicked on.
-     */
-    private void handleBoardClick(Position modelClickPos){
-        //Case 1: First click (no selection yet)
-        if (selectedModelPos == null){
-            //Get the moves to see if this is a valid piece to select
-            Set<Position> validMoves = gameController.getValidMovesForPiece(modelClickPos);
-
-            // Check the piece at the MODEL position
-            Piece clickedPiece = gameController.getGameState().getBoard().getPieceAt(modelClickPos);
-
-            //Only select if it's the player's own piece
-            if (clickedPiece != null &&
-                    clickedPiece.isWhite() == gameController.getGameState().isWhiteTurn())
-            {
-                selectedModelPos = modelClickPos;
-                boardPanel.setSelectedPosition(modelClickPos); //Tell view to highlight this model pos
-                boardPanel.showValidMoves(validMoves); //Show the dots
-            }
-        }
-        //Case 2: Second click (selection already exists)
+        // 2. CLICK: Released on the same square
         else {
-            //If clicking the same square, deselect
-            if (selectedModelPos.equals(modelClickPos)){
+            // --- NEW: Check if we should deselect ---
+            if (clickingSelectedPiece) {
+                // We clicked (pressed and released) on the piece that was ALREADY selected.
+                // This means "Deselect".
                 selectedModelPos = null;
                 boardPanel.clearSelections();
             }
-            //If clicking elsewhere, it's a move attempt
-            else {
-                gameController.handleMoveAttempt(selectedModelPos, modelClickPos);
-                //After the move, clear all GUI selections
-                selectedModelPos = null;
-                boardPanel.clearSelections();
-            }
+            // If clickingSelectedPiece is false, it means we just selected it in this click (first click),
+            // so we keep the selection.
         }
+
+        // If released on same square, we keep the selection (from mousePressed)
+        dragStartModelPos = null;
+        clickingSelectedPiece = false;
     }
 }
