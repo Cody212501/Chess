@@ -14,7 +14,7 @@ public class MainFrame extends JFrame{
     private final MenuController menuController;
     private final MouseController mouseController;
 
-    public MainFrame() {
+    public MainFrame(){
         setTitle("Sakk Program");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -44,7 +44,7 @@ public class MainFrame extends JFrame{
         boardPanel.addMouseMotionListener(mouseController);
 
         // 5. Finalize Window
-        pack(); // Resize window to fit components
+        pack(); // Resize the window to fit components
         setLocationRelativeTo(null); // Center on screen
         setResizable(false);
         setVisible(true);
@@ -53,7 +53,7 @@ public class MainFrame extends JFrame{
         gameController.start();
     }
 
-    private void createMenuBar(MenuController listener) {
+    private void createMenuBar(MenuController listener){
         JMenuBar menuBar = new JMenuBar();
 
         // File Menu
@@ -81,7 +81,7 @@ public class MainFrame extends JFrame{
     /**
      * Helper method to create a JMenuItem and attach the listener.
      */
-    private void addMenuItem(JMenu menu, String text, String command, MenuController listener) {
+    private void addMenuItem(JMenu menu, String text, String command, MenuController listener){
         JMenuItem item = new JMenuItem(text);
         item.setActionCommand(command);
         item.addActionListener(listener);

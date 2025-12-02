@@ -13,7 +13,7 @@ public class Knight extends Piece{
     public Set<Position> getPossiblyLegalMoves(Board board, Position currentPos){
         Set<Position> moves = new HashSet<>();
 
-        // A 8 lehetséges L-alakú lépés
+        // the 8 possible L step
         int[] dRows = { -2, -2, -1, -1,  1,  1,  2,  2 };
         int[] dCols = { -1,  1, -2,  2, -2,  2, -1,  1 };
 
@@ -21,8 +21,8 @@ public class Knight extends Piece{
             Position targetPos = new Position(currentPos.row() + dRows[i], currentPos.column() + dCols[i]);
 
             if(targetPos.isOnBoard()){
-                // A huszár ugrik, tehát csak azt kell ellenőrizni,
-                // hogy a célmezőn nem áll-e saját bábu.
+                // the Knight jumps over obstacles,
+                // so only needs to check not stepping on own piece.
                 if(!board.isOccupied(targetPos) || board.isOccupiedByEnemy(targetPos, isWhite)){
                     moves.add(targetPos);
                 }

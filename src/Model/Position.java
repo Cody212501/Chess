@@ -9,7 +9,7 @@ public record Position(int row, int column){
     /**
     *Checks, if given position is within the boundaries of the 8x8 board
     */
-    public boolean isOnBoard() {
+    public boolean isOnBoard(){
         return row >= 0 && row < 8 && column >= 0 && column < 8;
     }
 }

@@ -34,7 +34,7 @@ public class PGNParser{
         String pgnContent = formatter.format(state);
 
         // 2. Write the content to the file
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
+        try(BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))){
             writer.write(pgnContent);
         }
     }
@@ -57,7 +57,7 @@ public class PGNParser{
         parseTags(content, newState);
 
         // 2. Extract Move Text (remove tags)
-        String moveText = content.replaceAll("\\[.*?\\]", "");
+        String moveText = content.replaceAll("\\[.*?]", "");
         // Remove move numbers (1. 2. etc) and results (1-0 etc)
         moveText = moveText.replaceAll("\\d+\\.|1-0|0-1|1/2-1/2|\\*", "");
         // Replace newlines with spaces
@@ -66,14 +66,14 @@ public class PGNParser{
         // Split by spaces
         String[] tokens = moveText.trim().split("\\s+");
 
-        for (String token : tokens) {
-            if (token.isEmpty()) continue;
+        for(String token : tokens){
+            if(token.isEmpty()) continue;
 
             // Try to perform the move
             Move move = parseSanMove(newState, ruleEngine, token);
-            if (move != null) {
+            if(move != null){
                 newState.makeMove(move);
-            } else {
+            }else{
                 System.err.println("Skipping unparseable token: " + token);
             }
         }
@@ -81,21 +81,21 @@ public class PGNParser{
         return newState;
     }
 
-    private void parseTags(String content, GameState state) {
+    private void parseTags(String content, GameState state){
         Player white = new Player("White", 0);
         Player black = new Player("Black", 0);
 
-        Matcher mWhite = Pattern.compile("\\[White \"(.*?)\"\\]").matcher(content);
-        if (mWhite.find()) white.setName(mWhite.group(1));
+        Matcher mWhite = Pattern.compile("\\[White \"(.*?)\"]").matcher(content);
+        if(mWhite.find()) white.setName(mWhite.group(1));
 
-        Matcher mBlack = Pattern.compile("\\[Black \"(.*?)\"\\]").matcher(content);
-        if (mBlack.find()) black.setName(mBlack.group(1));
+        Matcher mBlack = Pattern.compile("\\[Black \"(.*?)\"]").matcher(content);
+        if(mBlack.find()) black.setName(mBlack.group(1));
 
-        Matcher mWhiteElo = Pattern.compile("\\[WhiteElo \"(\\d+)\"\\]").matcher(content);
-        if (mWhiteElo.find()) white.setElo(Integer.parseInt(mWhiteElo.group(1)));
+        Matcher mWhiteElo = Pattern.compile("\\[WhiteElo \"(\\d+)\"]").matcher(content);
+        if(mWhiteElo.find()) white.setElo(Integer.parseInt(mWhiteElo.group(1)));
 
-        Matcher mBlackElo = Pattern.compile("\\[BlackElo \"(\\d+)\"\\]").matcher(content);
-        if (mBlackElo.find()) black.setElo(Integer.parseInt(mBlackElo.group(1)));
+        Matcher mBlackElo = Pattern.compile("\\[BlackElo \"(\\d+)\"]").matcher(content);
+        if(mBlackElo.find()) black.setElo(Integer.parseInt(mBlackElo.group(1)));
 
         state.setPlayers(white, black);
     }
@@ -104,15 +104,15 @@ public class PGNParser{
      * Parses a single Standard Algebraic Notation (SAN) move.
      * e.g. "e4", "Nf3", "O-O", "Rxe1+"
      */
-    private Move parseSanMove(GameState state, RuleEngine engine, String san) {
+    private Move parseSanMove(GameState state, RuleEngine engine, String san){
         // Clean the SAN (remove check/mate symbols)
         String cleanSan = san.replace("+", "").replace("#", "");
 
         // 1. Handle Castling
-        if (cleanSan.equals("O-O") || cleanSan.equals("0-0")) {
+        if(cleanSan.equals("O-O") || cleanSan.equals("0-0")){
             return findCastlingMove(state, engine, true); // Kingside
         }
-        if (cleanSan.equals("O-O-O") || cleanSan.equals("0-0-0")) {
+        if(cleanSan.equals("O-O-O") || cleanSan.equals("0-0-0")){
             return findCastlingMove(state, engine, false); // Queenside
         }
 
@@ -122,24 +122,25 @@ public class PGNParser{
         String targetStr;
         String promotionChar = null;
 
-        if (cleanSan.contains("=")) {
+        if(cleanSan.contains("=")){
             int eqIndex = cleanSan.indexOf("=");
             targetStr = cleanSan.substring(eqIndex - 2, eqIndex);
             promotionChar = cleanSan.substring(eqIndex + 1);
             cleanSan = cleanSan.substring(0, eqIndex); // Remove promotion part for parsing
-        } else {
-            if (cleanSan.length() < 2) return null;
+        }else{
+            if(cleanSan.length() < 2) return null;
             targetStr = cleanSan.substring(cleanSan.length() - 2);
         }
         Position targetPos = notationToPosition(targetStr);
-        if (targetPos == null) return null;
+        if(targetPos == null) return null;
 
         // 3. Identify Piece Type
-        // If starts with Uppercase (B, N, R, Q, K), it's a piece. Otherwise Pawn.
+        // If starts with Uppercase (B, N, R, Q, K), it's a piece. Otherwise, it is a Pawn.
         char firstChar = cleanSan.charAt(0);
         PieceType type = PieceType.PAWN; // Default
-        if (Character.isUpperCase(firstChar)) {
-            switch (firstChar) {
+
+        if(Character.isUpperCase(firstChar)) {
+            switch(firstChar) {
                 case 'N': type = PieceType.KNIGHT; break;
                 case 'B': type = PieceType.BISHOP; break;
                 case 'R': type = PieceType.ROOK; break;
@@ -155,7 +156,7 @@ public class PGNParser{
         // Actually, at this point cleanSan might be "bd2" (from Nbd2), "f3" (from Nf3).
         // We remove the target square from the end.
         String disambiguation = "";
-        if (cleanSan.length() > 2) {
+        if(cleanSan.length() > 2){
             // Remove target square from end
             disambiguation = cleanSan.substring(0, cleanSan.length() - 2);
             // Remove capture 'x'
@@ -168,29 +169,29 @@ public class PGNParser{
          * We check if they can move to 'targetPos'.
          * We filter by 'disambiguation' info if present.
          */
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
+        for(int r = 0; r < 8; r++){
+            for(int c = 0; c < 8; c++){
                 Position currentPos = new Position(r, c);
                 Piece p = state.getBoard().getPieceAt(currentPos);
 
-                if (p != null && p.isWhite() == state.isWhiteTurn() && p.getType() == type) {
+                if(p != null && p.isWhite() == state.isWhiteTurn() && p.getType() == type){
                     // Check if matches disambiguation
-                    if (!disambiguation.isEmpty()) {
+                    if(!disambiguation.isEmpty()){
                         char fileChar = (char) ('a' + c);
                         char rankChar = (char) ('8' - r);
                         boolean matchesFile = disambiguation.indexOf(fileChar) >= 0;
                         boolean matchesRank = disambiguation.indexOf(rankChar) >= 0;
 
-                        if (!matchesFile && !matchesRank) continue; // Matches neither info provided
+                        if(!matchesFile && !matchesRank) continue; // Matches neither info provided
                     }
 
                     // Check if legal move
                     Move legalMove = engine.generateMove(state, currentPos, targetPos);
-                    if (legalMove != null) {
+                    if(legalMove != null){
                         // Handle Promotion Piece if parsed
-                        if (legalMove.isPromotion() && promotionChar != null) {
+                        if(legalMove.isPromotion() && promotionChar != null){
                             Piece promoPiece;
-                            switch (promotionChar) {
+                            switch(promotionChar){
                                 case "R": promoPiece = new Rook(state.isWhiteTurn()); break;
                                 case "B": promoPiece = new Bishop(state.isWhiteTurn()); break;
                                 case "N": promoPiece = new Knight(state.isWhiteTurn()); break;
@@ -207,7 +208,7 @@ public class PGNParser{
         return null;
     }
 
-    private Move findCastlingMove(GameState state, RuleEngine engine, boolean kingside) {
+    private Move findCastlingMove(GameState state, RuleEngine engine, boolean kingside){
         int r = state.isWhiteTurn() ? 7 : 0;
         Position kingPos = new Position(r, 4);
         Position targetPos = new Position(r, kingside ? 6 : 2);
@@ -215,18 +216,12 @@ public class PGNParser{
     }
 
 
-    // Helper methods (from CsvPersistence)
-    private Position notationToPosition(String notation) {
-        if (notation.length() != 2) return null;
+    // Helper method
+    private Position notationToPosition(String notation){
+        if(notation.length() != 2) return null;
         int col = notation.charAt(0) - 'a';
         int row = '8' - notation.charAt(1);
-        if (col < 0 || col > 7 || row < 0 || row > 7) return null;
+        if(col < 0 || col > 7 || row < 0 || row > 7) return null;
         return new Position(row, col);
-    }
-
-    private String positionToNotation(Position pos) {
-        char file = (char) ('a' + pos.column());
-        char rank = (char) ('8' - pos.row());
-        return "" + file + rank;
     }
 }

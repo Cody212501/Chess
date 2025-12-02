@@ -14,34 +14,34 @@ public class BoardPanel extends JPanel{
     public static final int TILE_SIZE = 80;
     public static final int MARGIN = 30;
 
-    //State variables managed by the Controller
+    // State variables managed by the Controller
     private Board currentBoard;
     private Set<Position> validMoves;
     private Position selectedPosition;
 
-    //Viewpoint variable
+    // Viewpoint variable
     private boolean isViewFromWhiteSide = true; // Default to White's view
 
-    //Drag-and-Drop GUI state
+    // Drag-and-Drop GUI state
     private Piece draggedPiece;
     private Point dragPosition;
 
-    //Image Caching
+    // Image Caching
     private final Map<String, Image> pieceImages;
     private final String IMAGE_PATH_PREFIX = "/Pictures/";
 
     // Red highlighting for King in check
     private Position kingInCheckPos = null;
 
-//methods start here
-    public BoardPanel() {
+// class methods start here
+    public BoardPanel(){
         setPreferredSize(new Dimension(8 * TILE_SIZE + 2 * MARGIN, 8 * TILE_SIZE + 2 * MARGIN));
         setBackground(new Color(40, 40, 40));
-        setOpaque(true); //Ensuring background is painted
+        setOpaque(true); // Ensuring background is painted
 
         this.validMoves = new HashSet<>();
         this.pieceImages = new HashMap<>();
-        //initializing board because of NPE
+        // initializing board because of NPE
         this.currentBoard = new Board();
 
         loadAllPieceImages();
@@ -49,13 +49,17 @@ public class BoardPanel extends JPanel{
 
     /**
      * Called by GameController to set the board orientation.
+     * Orientation changes based on the controlling player
      */
-    public void setViewpoint(boolean isWhiteTurn) {
+    public void setViewpoint(boolean isWhiteTurn){
         this.isViewFromWhiteSide = isWhiteTurn;
         repaint(); // Redraw the board in its new orientation
     }
 
-    public void setKingInCheck(Position pos) {
+    /**
+     * public method to check, if the king is in danger of being captured
+     */
+    public void setKingInCheck(Position pos){
         this.kingInCheckPos = pos;
         repaint();
     }
@@ -67,7 +71,7 @@ public class BoardPanel extends JPanel{
      * @param viewCol The column from the left of the panel (0-7)
      * @return The corresponding Position in the logical model.
      */
-    public Position getModelPosition(int viewRow, int viewCol) {
+    public Position getModelPosition(int viewRow, int viewCol){
         // Convert raw pixel coordinates (relative to this panel) to model Position (row,column)
 
         // 1) Adjust for margin
@@ -75,7 +79,7 @@ public class BoardPanel extends JPanel{
         int y = (viewCol - MARGIN);
 
         // 2) are we within the confines of the board?
-        if (x < 0 || x >= 8 * TILE_SIZE || y < 0 || y >= 8 * TILE_SIZE){
+        if(x < 0 || x >= 8 * TILE_SIZE || y < 0 || y >= 8 * TILE_SIZE){
             return new Position(-1, -1);
         }
 
@@ -85,10 +89,10 @@ public class BoardPanel extends JPanel{
 
 
         // 4) Map view indices to model indices depending on viewpoint orientation
-        if (isViewFromWhiteSide) {
+        if(isViewFromWhiteSide){
             // If White's view, coordinates are the same, as in the source code
             return new Position(viewingRow, viewingColumn);
-        } else {
+        }else{
             // If Black's view, the board is flipped
             // View row 0 is Model row 7
             // View col 0 is Model col 7
@@ -100,13 +104,13 @@ public class BoardPanel extends JPanel{
      * Model Position -> Screen Coordinate (relative to grid top-left)
      * Does NOT include MARGIN! (Because we use g2.translate)
      */
-    private Point getRelativeScreenCoordinates(Position modelPos) {
+    private Point getRelativeScreenCoordinates(Position modelPos){
         int viewRow, viewCol;
 
-        if (isViewFromWhiteSide) {
+        if(isViewFromWhiteSide){
             viewRow = modelPos.row();
             viewCol = modelPos.column();
-        } else {
+        }else{
             viewRow = 7 - modelPos.row();
             viewCol = 7 - modelPos.column();
         }
@@ -120,7 +124,7 @@ public class BoardPanel extends JPanel{
      * to MODEL coordinates to fetch the correct piece.
      */
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g){
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
@@ -133,8 +137,8 @@ public class BoardPanel extends JPanel{
         g2.translate(MARGIN, MARGIN);
 
         // 3. Draw Board & Pieces by iterating over the VIEW (panel)
-        for (int viewRow = 0; viewRow < 8; viewRow++) {
-            for (int viewCol = 0; viewCol < 8; viewCol++) {
+        for(int viewRow = 0; viewRow < 8; viewRow++){
+            for(int viewCol = 0; viewCol < 8; viewCol++){
                 // Get the corresponding MODEL position for this view square
                 Position modelPos = isViewFromWhiteSide ?
                         new Position(viewRow, viewCol) : new Position(7 - viewRow, 7 - viewCol);
@@ -151,15 +155,15 @@ public class BoardPanel extends JPanel{
                 g2.fillRect(x, y, TILE_SIZE, TILE_SIZE);
 
                 // 2. Highlight King in Check (Red Background)
-                if (kingInCheckPos != null && kingInCheckPos.equals(modelPos)) {
+                if(kingInCheckPos != null && kingInCheckPos.equals(modelPos)){
                     g2.setColor(new Color(255, 0, 0, 180));
                     g2.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                 }
 
                 // 3. Draw the piece
-                if (currentBoard != null) {
+                if(currentBoard != null){
                     Piece piece = currentBoard.getPieceAt(modelPos);
-                    if (piece != null && piece != draggedPiece) {
+                    if(piece != null && piece != draggedPiece){
                         drawPieceAt(g2, piece, x, y);
                     }
                 }
@@ -178,7 +182,7 @@ public class BoardPanel extends JPanel{
     /**
      * Called by GameController to set the new board state after a move.
      */
-    public void updateBoard(Board board) {
+    public void updateBoard(Board board){
         this.currentBoard = board;
         repaint();
     }
@@ -186,7 +190,7 @@ public class BoardPanel extends JPanel{
     /**
      * Called by MouseController to show valid move highlights.
      */
-    public void showValidMoves(Set<Position> moves) {
+    public void showValidMoves(Set<Position> moves){
         this.validMoves.clear();
         this.validMoves.addAll(moves);
         repaint();
@@ -195,7 +199,7 @@ public class BoardPanel extends JPanel{
     /**
      * Called by MouseController to highlight the selected square.
      */
-    public void setSelectedPosition(Position pos) {
+    public void setSelectedPosition(Position pos){
         this.selectedPosition = pos;
         repaint();
     }
@@ -203,7 +207,7 @@ public class BoardPanel extends JPanel{
     /**
      * Called by MouseController to clear all highlights.
      */
-    public void clearSelections() {
+    public void clearSelections(){
         this.selectedPosition = null;
         this.validMoves.clear();
         repaint();
@@ -212,7 +216,7 @@ public class BoardPanel extends JPanel{
     /**
      * Called by MouseController when a drag starts.
      */
-    public void startDrag(Position pos, Point point) {
+    public void startDrag(Position pos, Point point){
         this.draggedPiece = currentBoard.getPieceAt(pos);
         this.dragPosition = point;
         this.selectedPosition = pos; //select the square
@@ -222,7 +226,7 @@ public class BoardPanel extends JPanel{
     /**
      * Called by MouseController as the mouse is dragged.
      */
-    public void updateDrag(Point point) {
+    public void updateDrag(Point point){
         this.dragPosition = point;
         repaint();
     }
@@ -230,19 +234,19 @@ public class BoardPanel extends JPanel{
     /**
      * Called by MouseController when the drag is released.
      */
-    public void stopDrag() {
+    public void stopDrag(){
         this.draggedPiece = null;
         this.dragPosition = null;
-        //Don't clear selectedPosition or validMoves here, the move logic in GameController will handle that.
+        // Don't clear selectedPosition or validMoves here, the move logic in GameController will handle that.
         repaint();
     }
 
-    private void drawCoordinates(Graphics2D g2) {
+    private void drawCoordinates(Graphics2D g2){
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("SansSerif", Font.BOLD, 14));
         FontMetrics fm = g2.getFontMetrics();
 
-        for (int i = 0; i < 8; i++) {
+        for(int i = 0; i < 8; i++){
             // Rows (1-8)
             String rowStr = isViewFromWhiteSide ? String.valueOf(8 - i) : String.valueOf(i + 1);
             int y = MARGIN + i * TILE_SIZE + TILE_SIZE/2 + fm.getAscent()/2;
@@ -255,8 +259,8 @@ public class BoardPanel extends JPanel{
         }
     }
 
-    private void drawSelectedSquare(Graphics2D g2) {
-        if (selectedPosition != null) {
+    private void drawSelectedSquare(Graphics2D g2){
+        if(selectedPosition != null){
             Point p = getRelativeScreenCoordinates(selectedPosition);
             // Point already includes Margin because getViewCoordinates adds it.
             // BUT we are inside a g2.translate(MARGIN, MARGIN) block, so we must subtract margin here.
@@ -265,19 +269,19 @@ public class BoardPanel extends JPanel{
         }
     }
 
-    private void drawValidMoves(Graphics2D g2) {
+    private void drawValidMoves(Graphics2D g2){
         g2.setColor(new Color(139, 134, 128, 80)); // Transparent grey
 
-        for (Position modelPos : validMoves) {
+        for(Position modelPos : validMoves){
             Point p = getRelativeScreenCoordinates(modelPos);
 
             Piece targetPiece = currentBoard.getPieceAt(modelPos);
 
-            if (targetPiece != null) {
+            if(targetPiece != null){
                 // Capture: Yellow corners or full background highlight
                 g2.setColor(new Color(255, 100, 0, 150)); // Orange/Reddish ring
                 g2.fillRect(p.x, p.y, TILE_SIZE, TILE_SIZE);
-            } else {
+            }else{
                 // Move: Grey circle
                 g2.setColor(new Color(100, 100, 100, 128));
                 int radius = TILE_SIZE / 6;
@@ -286,13 +290,13 @@ public class BoardPanel extends JPanel{
         }
     }
 
-    private void drawDraggedPiece(Graphics2D g2) {
-        if (draggedPiece != null && dragPosition != null) {
+    private void drawDraggedPiece(Graphics2D g2){
+        if(draggedPiece != null && dragPosition != null){
             // This is drawn at the raw mouse coordinate, no translation needed
             int x = dragPosition.x - TILE_SIZE / 2;
             int y = dragPosition.y - TILE_SIZE / 2;
 
-            //Adjusting for drawString offset
+            // Adjusting for drawString offset
             drawPieceAt(g2, draggedPiece, x, y);
         }
     }
@@ -301,51 +305,40 @@ public class BoardPanel extends JPanel{
      * Loads all chess piece images into a cache.
      * This prevents reloading the same image multiple times, improving performance.
      */
-    private void loadAllPieceImages() {
+    private void loadAllPieceImages(){
         String[] colors = {"White", "Black"};
         String[] types = {"Pawn", "Rook", "Knight", "Bishop", "Queen", "King"};
 
-        for (String color : colors) {
-            for (String type : types) {
+        for(String color : colors){
+            for(String type : types){
                 String fileName = color + type + ".jpg";
                 String path = IMAGE_PATH_PREFIX + fileName;
                 try {
-                    /**
-                     *  Use getResource() for loading from JAR (deployed app) or file system (IDE development)
-                     *  Image img = ImageIO.read(Objects.requireNonNull(
-                     *      getClass().getResource(IMAGE_PATH_PREFIX + fileName),
-                     *       "Image not found: " + IMAGE_PATH_PREFIX + fileName
-                     *));
-                     */
-
-                    // FIX(hopefully): getClass().getResource expects path from root of classpath
                     URL url = getClass().getResource(path);
-                    if (url == null) {
+                    if(url == null){
                         System.err.println("Image not found: " + path);
                         continue;
                     }
 
                     Image img = ImageIO.read(url);
-                    System.out.println("Image " + fileName +" found at: " + path);
                     pieceImages.put(fileName, img.getScaledInstance(TILE_SIZE, TILE_SIZE, Image.SCALE_SMOOTH));
-                    System.out.println("Image loaded!");
 
-                } catch (IOException e) {
+                } catch(IOException e){
                     System.err.println("Error loading image: " + fileName + " - " + e.getMessage());
-                } catch (NullPointerException e) {
+                } catch(NullPointerException e){
                     System.err.println(e.getMessage());
                 }
             }
         }
     }
 
-    private void drawPieceAt(Graphics2D g2, Piece piece, int x, int y) {
-        if (currentBoard == null) return;
+    private void drawPieceAt(Graphics2D g2, Piece piece, int x, int y){
+        if(currentBoard == null) return;
 
         Image pieceImage = getPieceImage(piece);
-        if (pieceImage != null) {
+        if(pieceImage != null){
             g2.drawImage(pieceImage, x, y, TILE_SIZE, TILE_SIZE, this);
-        } else {
+        }else{
             /**
              * great resource: https://en.wikipedia.org/wiki/Chess_symbols_in_Unicode
              * the white pieces are hollow, while the black pieces are filled in
@@ -368,19 +361,26 @@ public class BoardPanel extends JPanel{
      * @param piece The piece for which to get the image.
      * @return The scaled Image object, or null if not found.
      */
-    private Image getPieceImage(Piece piece) {
-        if (piece == null) return null;
-        String fileName = (piece.isWhite() ? "White" : "Black") + piece.getType().name() + ".jpg";
+    private Image getPieceImage(Piece piece){
+        /**
+         * here was the fixing needed
+         * the piece type string was in full upper case letters
+         * where as the file name was in camel case writing
+         */
+        if(piece == null) return null;
+        String pieceName = piece.getType().name().substring(0,1);
+        pieceName +=  piece.getType().name().substring(1).toLowerCase();
+        String fileName = (piece.isWhite() ? "White" : "Black") + pieceName + ".jpg";
         return pieceImages.get(fileName);
     }
 
-    //fallback option just in case
-    private String getPieceSymbol(Piece piece) {
-        if (piece == null){
+    // fallback option just in case (is a pretty good alternative, as the pieces are pretty)
+    private String getPieceSymbol(Piece piece){
+        if(piece == null){
             return "?";
         }
-        if (piece.isWhite()) {
-            switch(piece.getType()) {
+        if(piece.isWhite()){
+            switch(piece.getType()){
                 case PAWN: return "♙";
                 case ROOK: return "♖";
                 case KNIGHT: return "♘";
@@ -388,8 +388,8 @@ public class BoardPanel extends JPanel{
                 case QUEEN: return "♕";
                 case KING: return "♔";
             }
-        } else {
-            switch(piece.getType()) {
+        }else{
+            switch(piece.getType()){
                 case PAWN: return "♟";
                 case ROOK: return "♜";
                 case KNIGHT: return "♞";

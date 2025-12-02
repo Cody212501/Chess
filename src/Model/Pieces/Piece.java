@@ -8,16 +8,16 @@ public abstract class Piece{
     protected final boolean isWhite;
     protected final PieceType type;
 
-    public Piece(boolean isWhite, PieceType type) {
+    public Piece(boolean isWhite, PieceType type){
         this.isWhite = isWhite;
         this.type = type;
     }
 
-    public boolean isWhite() {
+    public boolean isWhite(){
         return isWhite;
     }
 
-    public PieceType getType() {
+    public PieceType getType(){
         return type;
     }
 
@@ -36,16 +36,16 @@ public abstract class Piece{
      *Goes to the end of the board in one direction (d_rows, d_columns),
      * till it finds the edge, or another piece.
      */
-    protected void addSlidingMoves(Board board, Position start, Set<Position> moves, int dRow, int dCol) {
+    protected void addSlidingMoves(Board board, Position start, Set<Position> moves, int dRow, int dCol){
         Position nextPos = new Position(start.row() + dRow, start.column() + dCol);
 
-        while (nextPos.isOnBoard()) {
-            if (!board.isOccupied(nextPos)) {
+        while (nextPos.isOnBoard()){
+            if(!board.isOccupied(nextPos)){
                 //empty square, adding, and moving on
                 moves.add(nextPos);
-            } else {
+            }else{
                 //occupied square
-                if (board.isOccupiedByEnemy(nextPos, this.isWhite)) {
+                if(board.isOccupiedByEnemy(nextPos, this.isWhite)){
                     //opponent's piece, adding to move, than stopping in this line
                     moves.add(nextPos);
                 }
@@ -54,14 +54,5 @@ public abstract class Piece{
             }
             nextPos = new Position(nextPos.row() + dRow, nextPos.column() + dCol);
         }
-    }
-
-    /**
-     * Returns the base filename for the piece's image.
-     * e.g., "Pawn", "Rook", "King".
-     * The BoardPanel will add colour prefix (White or Black) and ".jpg" suffix.
-     */
-    public String getImageBaseName() {
-        return type.name(); // Uses the name of the enum constant (e.g., "PAWN")
     }
 }

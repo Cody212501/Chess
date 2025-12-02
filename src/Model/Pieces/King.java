@@ -13,26 +13,21 @@ public class King extends Piece{
     public Set<Position> getPossiblyLegalMoves(Board board, Position currentPos){
         Set<Position> moves = new HashSet<>();
 
-        // A 8 szomszédos mező
-        for (int dr = -1; dr <= 1; dr++){
-            for (int dc = -1; dc <= 1; dc++){
-                if (dr == 0 && dc == 0) continue; // A jelenlegi pozíciót kihagyjuk
+        // the 8 neighbouring squares
+        for(int dr = -1; dr <= 1; dr++){
+            for(int dc = -1; dc <= 1; dc++){
+                if(dr == 0 && dc == 0) continue; // ignoring the current square
 
                 Position targetPos = new Position(currentPos.row() + dr, currentPos.column() + dc);
 
-                if (targetPos.isOnBoard()){
-                    // Csak azt ellenőrizzük, hogy nem lépünk-e saját bábura
-                    if (!board.isOccupied(targetPos) || board.isOccupiedByEnemy(targetPos, isWhite)){
+                if(targetPos.isOnBoard()){
+                    // only checking for not stepping on own piece
+                    if(!board.isOccupied(targetPos) || board.isOccupiedByEnemy(targetPos, isWhite)){
                         moves.add(targetPos);
                     }
                 }
             }
         }
-
-        // TODO: A sáncolás (Castling) logikát a RuleEngine-nek kell kezelnie,
-        // mivel az függ a GameState-től (nem volt-e sakkban, nem mozdult-e a király/bástya).
-        // A RuleEngine adhatja hozzá a (g1, c1) stb. lépéseket, ha legálisak.
-
         return moves;
     }
 }

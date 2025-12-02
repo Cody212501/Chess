@@ -10,7 +10,7 @@ import java.awt.event.*;
 public class MenuController implements ActionListener{
     private final GameController gameController;
 
-    public MenuController(GameController gameController) {
+    public MenuController(GameController gameController){
         this.gameController = gameController;
     }
 
@@ -19,12 +19,14 @@ public class MenuController implements ActionListener{
      * It decides what to do based on the ActionEvent's "action command".
      */
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e){
         String command = e.getActionCommand();
 
-        if (command == null) return;
+        if(command == null){
+            return;
+        }
 
-        switch (command) {
+        switch(command){
             case "NEW_GAME":
                 gameController.showNewGameDialog();
                 break;

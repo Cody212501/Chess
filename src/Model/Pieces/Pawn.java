@@ -15,15 +15,15 @@ public class Pawn extends Piece{
         int r = currentPos.row();
         int c = currentPos.column();
 
-        // A lépés iránya a színtől függ (fehér: -1 (felfelé), fekete: +1 (lefelé))
+        // the direction of the move is based on color (white: -1 (upwards), black: +1 (downwards))
         int direction = isWhite ? -1 : 1;
 
-        // 1. Egyszerű lépés előre
+        // 1. simple move forward
         Position oneStep = new Position(r + direction, c);
         if(oneStep.isOnBoard() && !board.isOccupied(oneStep)){
             moves.add(oneStep);
 
-            // 2. Dupla lépés (csak ha az első lépés is szabad volt)
+            // 2. Double move forward (just on the first move, and only if the square is free)
             boolean atStartRow =(isWhite && r == 6) ||(!isWhite && r == 1);
             if(atStartRow){
                 Position twoSteps = new Position(r + 2 * direction, c);
@@ -33,7 +33,7 @@ public class Pawn extends Piece{
             }
         }
 
-        // 3. Ütések (átlósan)
+        // 3. Captures (diagonally)
         int[] captureCols = { c - 1, c + 1 };
         for(int captureCol : captureCols){
             Position capturePos = new Position(r + direction, captureCol);
@@ -41,10 +41,6 @@ public class Pawn extends Piece{
                 moves.add(capturePos);
             }
         }
-
-        // TODO: Az En Passant logikát a RuleEngine-nek kell kezelnie,
-        // mivel az függ a GameState-től (az ellenfél utolsó lépése).
-
         return moves;
     }
 }

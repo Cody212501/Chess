@@ -61,9 +61,9 @@ public class GameController{
                 JOptionPane.QUESTION_MESSAGE,
                 null, options, options[0]);
 
-        if (choice == JOptionPane.YES_OPTION){
+        if(choice == JOptionPane.YES_OPTION){
             showNewGameDialog();
-        } else {
+        }else{
             handleLoadGame();
         }
     }
@@ -75,15 +75,16 @@ public class GameController{
         NewGameDialog dialog = new NewGameDialog(mainFrame);
         dialog.setVisible(true);
 
-        if (dialog.isSucceeded()){
+        if(dialog.isSucceeded()){
             Player white = new Player(dialog.getWhiteName(), dialog.getWhiteElo());
             Player black = new Player(dialog.getBlackName(), dialog.getBlackElo());
+
             // Timer settings are collected in dialog but GameState doesn't support time yet.
-            // We proceed without it for now.
+            // We proceed without it for now, it is a wip.
             //TODO: Process timer settings (dialog.isTimerEnabled()...)
 
             startNewGame(white, black);
-        } else {
+        }else{
             //If the user closes the dialog, send them back to the start() menu.
             start();
         }
@@ -109,14 +110,14 @@ public class GameController{
      * @param to The target position.
      */
     public void handleMoveAttempt(Position from, Position to){
-        if (gameState == null || !isGameInProgress) return;
+        if(gameState == null || !isGameInProgress) return;
 
         // 1. Ask the RuleEngine to generate and validate the move.
         Move move = ruleEngine.generateMove(gameState, from, to);
 
-        if (move != null) {
+        if(move != null){
             // 2. Handle Promotion (if move is tagged)
-            if (move.isPromotion()) {
+            if(move.isPromotion()){
                 // We must ask the user what piece they want(by default, a Queen is selected)
                 Piece promotionPiece = askForPromotionPiece(gameState.isWhiteTurn());
                 move.setPromotionPiece(promotionPiece);
@@ -127,22 +128,22 @@ public class GameController{
             refreshAllViews();
 
             // 4. Check for game-ending conditions
-            if (move.isCheckmate()) {
-                boardPanel.setKingInCheck(findKingPos(!gameState.isWhiteTurn())); // Highlight loser king
+            if(move.isCheckmate()){
+                boardPanel.setKingInCheck(findKingPos(!gameState.isWhiteTurn())); // Highlight losing player's king
                 JOptionPane.showMessageDialog(mainFrame, "Sakk-matt!");
                 isGameInProgress = false;
-            } else if (move.isCheck()) {
-                boardPanel.setKingInCheck(findKingPos(gameState.isWhiteTurn())); // Highlight current king
-            } else {
+            }else if(move.isCheck()){
+                boardPanel.setKingInCheck(findKingPos(gameState.isWhiteTurn())); // Highlight the checked king
+            }else{
                 boardPanel.setKingInCheck(null); // Clear highlight
             }
 
-            if (ruleEngine.isStalemate(gameState)) {
-                JOptionPane.showMessageDialog(mainFrame, "Patt!");
+            if(ruleEngine.isStalemate(gameState)){
+                JOptionPane.showMessageDialog(mainFrame, "Patt!\nAz ellenfélnek nincs szabályos lépése.");
                 isGameInProgress = false;
             }
 
-        } else {
+        }else{
             // Move was illegal, just reset the GUI
             boardPanel.clearSelections();
             boardPanel.updateBoard(gameState.getBoard()); // Resets the piece
@@ -152,14 +153,14 @@ public class GameController{
     /**
      * Helper method to show a dialog for pawn promotion.
      */
-    private Piece askForPromotionPiece(boolean isWhite) {
+    private Piece askForPromotionPiece(boolean isWhite){
         Object[] options = {"Queen", "Rook", "Bishop", "Knight"};
         String pieceName = (String) JOptionPane.showInputDialog(mainFrame,
                 "Choose a piece for promotion:",
                 "Pawn Promotion",
                 JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
-        switch (pieceName) {
+        switch(pieceName){
             case "Rook": return new Rook(isWhite);
             case "Bishop": return new Bishop(isWhite);
             case "Knight": return new Knight(isWhite);
@@ -168,10 +169,10 @@ public class GameController{
         }
     }
 
-    private Position findKingPos(boolean isWhite) {
+    private Position findKingPos(boolean isWhite){
         Board b = gameState.getBoard();
-        for(int r=0; r<8; r++) {
-            for(int c=0; c<8; c++) {
+        for(int r=0; r<8; r++){
+            for(int c=0; c<8; c++){
                 Position p = new Position(r,c);
                 Piece pc = b.getPieceAt(p);
                 if(pc != null && pc.getType() == PieceType.KING && pc.isWhite() == isWhite) return p;
@@ -184,14 +185,14 @@ public class GameController{
      * Handles the "Save (JSON)" menu item.
      */
     public void handleSaveGame(){
-        if (gameState == null){
+        if(gameState == null){
             JOptionPane.showMessageDialog(mainFrame, "Nothing to save!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Save Game State (JSON)");
-        if (fileChooser.showSaveDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
+        if(fileChooser.showSaveDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
             File file = fileChooser.getSelectedFile();
 
             // Ensure extension is correct
@@ -210,7 +211,7 @@ public class GameController{
     public void handleLoadGame(){
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Load Game State (JSON)");
-        if (fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
+        if(fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
             File file = fileChooser.getSelectedFile();
             try {
                 this.gameState = jsonPersistence.loadGame(file.getPath());
@@ -226,14 +227,14 @@ public class GameController{
      * Handles the "PGN Export" menu item.
      */
     public void handleExportPgn(){
-        if (gameState == null){
+        if(gameState == null){
             JOptionPane.showMessageDialog(mainFrame, "Nothing to export!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Export Game as PGN");
-        if (fileChooser.showSaveDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
+        if(fileChooser.showSaveDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
             File file = fileChooser.getSelectedFile();
             try (FileWriter writer = new FileWriter(file)){
                 String pgnText = pgnFormatter.format(gameState);
@@ -248,20 +249,19 @@ public class GameController{
     /**
      * Handles the "PGN Import" menu item.
      */
-    public void handleImportPgn() {
+    public void handleImportPgn(){
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("PGN Importálása");
-        if (fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION) {
+        if(fileChooser.showOpenDialog(mainFrame) == JFileChooser.APPROVE_OPTION){
             File file = fileChooser.getSelectedFile();
             try {
-                GameState newState = pgnParser.importGame(file.getPath());
-                this.gameState = newState;
+                this.gameState = pgnParser.importGame(file.getPath());
                 this.isGameInProgress = true;
 
                 // Assuming successful load means game is active
                 refreshAllViews();
                 JOptionPane.showMessageDialog(mainFrame, "PGN import successful!");
-            } catch (Exception e) {
+            } catch (Exception e){
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(mainFrame, "Hiba PGN importálás közben:\n" + e.getMessage(), "Import Hiba", JOptionPane.ERROR_MESSAGE);
             }
@@ -272,9 +272,9 @@ public class GameController{
      * Handles the "Offer Draw" menu item.
      */
     public void handleDrawOffer(){
-        if (gameState == null) return;
+        if(gameState == null) return;
 
-        if (!gameState.canCurrentPlayerOfferDraw()){
+        if(!gameState.canCurrentPlayerOfferDraw()){
             JOptionPane.showMessageDialog(mainFrame, "You cannot offer a draw at this time.", "Draw", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -287,11 +287,10 @@ public class GameController{
                 "Draw Offer",
                 JOptionPane.YES_NO_OPTION);
 
-        if (response == JOptionPane.YES_OPTION){
+        if(response == JOptionPane.YES_OPTION){
             JOptionPane.showMessageDialog(mainFrame, "The game has ended in a draw.");
-            //TODO: End the game, disable GUI
             gameState = null;
-        } else {
+        }else{
             JOptionPane.showMessageDialog(mainFrame, "Draw offer declined.");
             gameState.recordDrawOfferRejection();
         }
@@ -301,7 +300,7 @@ public class GameController{
      * Refreshes all views based on the current GameState.
      */
     private void refreshAllViews(){
-        if (gameState == null) return;
+        if(gameState == null) return;
 
         // 1. Update Board Logic (Rotation)
         boardPanel.setViewpoint(gameState.isWhiteTurn());
@@ -311,10 +310,10 @@ public class GameController{
 
         // 3. Check/Mate Visuals
         // IMPORTANT: Check if CURRENT player (who is about to move) is in check
-        if (ruleEngine.isKingInCheck(gameState, gameState.isWhiteTurn())) {
+        if(ruleEngine.isKingInCheck(gameState, gameState.isWhiteTurn())){
             Position kingPos = findKingPos(gameState.isWhiteTurn());
             boardPanel.setKingInCheck(kingPos);
-        } else {
+        }else{
             boardPanel.setKingInCheck(null);
         }
 
@@ -334,7 +333,7 @@ public class GameController{
      * so it can draw the green dots.
      */
     public Set<Position> getValidMovesForPiece(Position pos){
-        if (gameState == null){
+        if(gameState == null){
             return Set.of(); //Return an empty set
         }
         return ruleEngine.getValidMovesForPiece(gameState, pos);

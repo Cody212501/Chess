@@ -16,7 +16,7 @@ public class SidePanel extends JPanel{
     private final JPanel whitePanel;
     private final JPanel blackPanel;
 
-    public SidePanel() {
+    public SidePanel(){
         this.setLayout(new BorderLayout());
         this.setPreferredSize(new Dimension(300, 8 * BoardPanel.TILE_SIZE));
         this.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -47,9 +47,9 @@ public class SidePanel extends JPanel{
     }
 
     /**
-     * Helper method to create a standardised panel for player info.
+     * Helper method to create a standardized panel for player info.
      */
-    private JPanel createPlayerPanel(String title) {
+    private JPanel createPlayerPanel(String title){
         JPanel outerPanel = new JPanel(new BorderLayout());
         outerPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.GRAY), title,
@@ -59,7 +59,6 @@ public class SidePanel extends JPanel{
 
         JPanel innerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         innerPanel.add(new JLabel("Player: " + title)); // Placeholder
-        // TODO: Add ELO and Timer labels here
 
         outerPanel.add(innerPanel, BorderLayout.CENTER);
         return outerPanel;
@@ -68,7 +67,7 @@ public class SidePanel extends JPanel{
     /**
      * Called by GameController to update the player names and ELO.
      */
-    public void updatePlayerInfo(Player white, Player black) {
+    public void updatePlayerInfo(Player white, Player black){
         whitePlayerLabel.setText(String.format("%s (%d)", white.getName(), white.getElo()));
         blackPlayerLabel.setText(String.format("%s (%d)", black.getName(), black.getElo()));
     }
@@ -76,11 +75,11 @@ public class SidePanel extends JPanel{
     /**
      * Called by GameController to visually indicate whose turn it is.
      */
-    public void updatePlayerTurn(boolean isWhiteTurn) {
-        if (isWhiteTurn) {
+    public void updatePlayerTurn(boolean isWhiteTurn){
+        if(isWhiteTurn){
             whitePanel.setBackground(Color.LIGHT_GRAY);
             blackPanel.setBackground(null); // Reset to default
-        } else {
+        }else{
             whitePanel.setBackground(null); // Reset to default
             blackPanel.setBackground(Color.LIGHT_GRAY);
         }
@@ -91,7 +90,7 @@ public class SidePanel extends JPanel{
      * Called by GameController after a move is made.
      * It passes the new list to the table model.
      */
-    public void updateMoveHistory(List<Move> moves) {
+    public void updateMoveHistory(List<Move> moves){
         moveLogModel.setMoves(moves);
     }
 }

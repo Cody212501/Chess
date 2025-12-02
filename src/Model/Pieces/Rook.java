@@ -13,7 +13,7 @@ public class Rook extends Piece{
     public Set<Position> getPossiblyLegalMoves(Board board, Position currentPos){
         Set<Position> moves = new HashSet<>();
 
-        // Vízszintes és függőleges irányok
+        // vertical and horizontal checking
         int[] dRows = { -1, 1, 0, 0 };
         int[] dCols = { 0, 0, -1, 1 };
 

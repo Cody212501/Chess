@@ -13,7 +13,7 @@ public class Bishop extends Piece{
     public Set<Position> getPossiblyLegalMoves(Board board, Position currentPos){
         Set<Position> moves = new HashSet<>();
 
-        // Átlós irányok
+        // Diagonal directions
         int[] dRows = { -1, -1,  1, 1 };
         int[] dCols = { -1,  1, -1, 1 };
 

@@ -13,7 +13,7 @@ public class Queen extends Piece{
     public Set<Position> getPossiblyLegalMoves(Board board, Position currentPos){
         Set<Position> moves = new HashSet<>();
 
-        // Minden (8) irány (bástya + futó)
+        // needs to check in all directions
         int[] dRows = { -1, -1, -1,  0, 0,  1, 1, 1 };
         int[] dCols = { -1,  0,  1, -1, 1, -1, 0, 1 };
 

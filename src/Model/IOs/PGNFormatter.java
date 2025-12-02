@@ -26,7 +26,7 @@ public class PGNFormatter{
 
     public PGNFormatter(){
         this.simulationBoard = new Board();
-        // A RuleEngine-t argumentumok nélkül inicializáljuk
+        // RuleEngine is initialised without arguments
         this.ambiguityEngine = new RuleEngine();
     }
 
@@ -35,7 +35,7 @@ public class PGNFormatter{
      * @param state The GameState to format.
      * @return A String containing the full PGN text.
      */
-    public String format(GameState state) {
+    public String format(GameState state){
         StringBuilder sb = new StringBuilder();
 
         // 1. Append Tag Pairs (Headers)
@@ -43,12 +43,25 @@ public class PGNFormatter{
         sb.append("\n"); // Blank line between tags and movetext
 
         // 2. Append Movetext
-        appendMovetext(sb, state);
+        appendMoveText(sb, state);
 
         // 3. Append Result
-        // TODO: The GameState should know the result ("1-0", "0-1", "1/2-1/2")
-        // For now, we use "*" (unknown).
-        sb.append(" *");
+        // Check the FINAL state of the game
+        RuleEngine finalRuleEngine = new RuleEngine();
+
+        if (finalRuleEngine.isCheckmate(state)) {
+            // If it is White's turn - and it's checkmate - White lost -> 0-1
+            if (state.isWhiteTurn()) {
+                sb.append(" 0-1");
+            } else {
+                sb.append(" 1-0");
+            }
+        } else if (finalRuleEngine.isStalemate(state)) {
+            sb.append(" 1/2-1/2");
+        } else {
+            // The game is still in progress or abandoned
+            sb.append(" *");
+        }
 
         return sb.toString();
     }
@@ -56,7 +69,7 @@ public class PGNFormatter{
     /**
      * Appends the PGN tag pairs (e.g., [White "Name"]).
      */
-    private void appendTagPairs(StringBuilder sb, GameState state) {
+    private void appendTagPairs(StringBuilder sb, GameState state){
         // Get player data, providing defaults if null
         Player white = state.getWhitePlayer() != null ? state.getWhitePlayer() : new Player("White", 0);
         Player black = state.getBlackPlayer() != null ? state.getBlackPlayer() : new Player("Black", 0);
@@ -73,15 +86,15 @@ public class PGNFormatter{
         appendTag(sb, "Black", black.getName());
         appendTag(sb, "Result", "*"); // The result is also appended at the end
 
-        // Append non-standard but useful tags (ELO)
-        if (white.getElo() > 0) appendTag(sb, "WhiteElo", String.valueOf(white.getElo()));
-        if (black.getElo() > 0) appendTag(sb, "BlackElo", String.valueOf(black.getElo()));
+        // Append non-standard, but useful tags (ELO)
+        if(white.getElo() > 0) appendTag(sb, "WhiteElo", String.valueOf(white.getElo()));
+        if(black.getElo() > 0) appendTag(sb, "BlackElo", String.valueOf(black.getElo()));
     }
 
     /**
      * Helper to format a single [Tag "Value"] line.
      */
-    private void appendTag(StringBuilder sb, String tag, String value) {
+    private void appendTag(StringBuilder sb, String tag, String value){
         sb.append("[").append(tag).append(" \"").append(value).append("\"]\n");
     }
 
@@ -89,17 +102,17 @@ public class PGNFormatter{
      * Appends the main move text (e.g., "1. e4 e5 2. Nf3 Nc6").
      * This requires re-simulating the game to find move ambiguities.
      */
-    private void appendMovetext(StringBuilder sb, GameState state) {
+    private void appendMoveText(StringBuilder sb, GameState state){
         // We must re-simulate the game move by move to check for ambiguities
         this.ambiguityEngine = new RuleEngine();
 
         int moveNumber = 1;
 
-        for (int i = 0; i < state.getMoveHistory().size(); i++) {
+        for(int i = 0; i < state.getMoveHistory().size(); i++){
             Move move = state.getMoveHistory().get(i);
 
             // 1. Append move number (e.g., "1. ") for White's move
-            if (i % 2 == 0) {
+            if(i % 2 == 0){
                 sb.append(moveNumber).append(". ");
                 moveNumber++;
             }
@@ -119,16 +132,16 @@ public class PGNFormatter{
      * @param move The Move object (assumed to be tagged with check/mate etc.)
      * @return A string like "Nf3", "exd5", "O-O", "e8=Q#"
      */
-    private String generateSanForMove(Move move) {
+    private String generateSanForMove(Move move){
         Piece piece = move.getPieceMoved();
 
         //1. Handle Castling (Special Case)
         // We rely on the move being tagged.
-        if (move.isCastling()) {
+        if(move.isCastling()){
             // Kingside (short) castle
-            if (move.getTo().column() == 6) return "O-O" + getCheckOrMateSymbol(move);
+            if(move.getTo().column() == 6) return "O-O" + getCheckOrMateSymbol(move);
             // Queenside (long) castle
-            if (move.getTo().column() == 2) return "O-O-O" + getCheckOrMateSymbol(move);
+            if(move.getTo().column() == 2) return "O-O-O" + getCheckOrMateSymbol(move);
         }
 
         StringBuilder san = new StringBuilder();
@@ -138,9 +151,9 @@ public class PGNFormatter{
         san.append(pieceSymbol);
 
         //3. Handle Captures (e.g., "x")
-        boolean isCapture = (move.getPieceCaptured() != null);
+        boolean isCapture =(move.getPieceCaptured() != null);
 
-        if (isCapture && piece.getType() == PieceType.PAWN) {
+        if(isCapture && piece.getType() == PieceType.PAWN){
             // Pawn captures include the departure file (e.g., "exd5")
             san.append(getFileChar(move.getFrom().column()));
         }
@@ -148,13 +161,13 @@ public class PGNFormatter{
         //4. Disambiguation (The Hardest Part)
         // If it's not a pawn, we check if another identical piece
         // could have moved to the same square.
-        if (piece.getType() != PieceType.PAWN) {
+        if(piece.getType() != PieceType.PAWN){
             String disambiguation = findDisambiguation(move);
             san.append(disambiguation);
         }
 
         //5. Add Capture 'x'
-        if (isCapture) {
+        if(isCapture){
             san.append("x");
         }
 
@@ -162,7 +175,7 @@ public class PGNFormatter{
         san.append(positionToNotation(move.getTo()));
 
         //7. Promotion (e.g., "=Q")
-        if (move.isPromotion()) {
+        if(move.isPromotion()){
             san.append("=").append(getPgnPieceSymbol(move.getPromotionPiece()));
         }
 
@@ -178,7 +191,7 @@ public class PGNFormatter{
      * @param move The move being made.
      * @return A disambiguation string (e.g., "b", "1", "b1") or "" if clear.
      */
-    private String findDisambiguation(Move move) {
+    private String findDisambiguation(Move move){
         Piece movingPiece = move.getPieceMoved();
         Position target = move.getTo();
         boolean isWhite = movingPiece.isWhite();
@@ -186,17 +199,17 @@ public class PGNFormatter{
         Position ambiguitySource = null; // Position of the *other* piece in question
 
         // Iterate over the whole (simulation) board
-        for (int r = 0; r < 8; r++) {
-            for (int c = 0; c < 8; c++) {
+        for(int r = 0; r < 8; r++){
+            for(int c = 0; c < 8; c++){
                 Position currentPos = new Position(r, c);
 
                 // Skip the piece that is actually moving
-                if (currentPos.equals(move.getFrom())) continue;
+                if(currentPos.equals(move.getFrom())) continue;
 
                 Piece otherPiece = this.simulationBoard.getPieceAt(currentPos);
 
                 // Check if we can fund a piece of the same type and color
-                if (otherPiece != null &&
+                if(otherPiece != null &&
                         otherPiece.isWhite() == isWhite &&
                         otherPiece.getType() == movingPiece.getType()){
                     // Found another piece of the same type and colour.
@@ -210,31 +223,31 @@ public class PGNFormatter{
                     //    This checks for checks, pins, etc.
                     Set<Position> legalMoves = ambiguityEngine.getValidMovesForPiece(tempState, currentPos);
 
-                    if (legalMoves.contains(target)) {
+                    if(legalMoves.contains(target)){
                         // AMBIGUITY FOUND: Another piece can legally move to the same square.
                         ambiguitySource = currentPos;
                         break; // We found at least one ambiguity, that's enough to require disambiguation logic
                     }
                 }
             }
-            if (ambiguitySource != null){
+            if(ambiguitySource != null){
                 break;
             }
         }
 
-        if (ambiguitySource == null) {
+        if(ambiguitySource == null){
             return ""; // No ambiguity
         }
 
         //If ambiguity exists, resolve it
 
         // 1. If files (columns) are different, use the file (e.g., "Nbd2")
-        if (move.getFrom().column() != ambiguitySource.column()) {
+        if(move.getFrom().column() != ambiguitySource.column()){
             return getFileChar(move.getFrom().column());
         }
 
         // 2. If files are same, use the rank (row) (e.g., "R1e2")
-        if (move.getFrom().row() != ambiguitySource.row()) {
+        if(move.getFrom().row() != ambiguitySource.row()){
             return getRankChar(move.getFrom().row());
         }
 
@@ -249,8 +262,8 @@ public class PGNFormatter{
      * Gets the single-character PGN symbol for a piece.
      * Note: Pawn is an empty string.
      */
-    private String getPgnPieceSymbol(Piece piece) {
-        switch (piece.getType()) {
+    private String getPgnPieceSymbol(Piece piece){
+        switch(piece.getType()){
             case KNIGHT: return "N";
 
             case BISHOP: return "B";
@@ -270,30 +283,30 @@ public class PGNFormatter{
      * Returns "#" for checkmate, "+" for check, or "" otherwise.
      * Relies on the Move object being tagged.
      */
-    private String getCheckOrMateSymbol(Move move) {
-        if (move.isCheckmate()) return "#";
-        if (move.isCheck()) return "+";
+    private String getCheckOrMateSymbol(Move move){
+        if(move.isCheckmate()) return "#";
+        if(move.isCheck()) return "+";
         return "";
     }
 
     /**
      * Converts a Position object (e.g., row=6, col=4) to notation (e.g., "e2").
      */
-    private String positionToNotation(Position pos) {
+    private String positionToNotation(Position pos){
         return getFileChar(pos.column()) + getRankChar(pos.row());
     }
 
     /**
      * Gets the file character (e.g., 'a' for col 0).
      */
-    private String getFileChar(int col) {
+    private String getFileChar(int col){
         return String.valueOf((char) ('a' + col));
     }
 
     /**
      * Gets the rank character (e.g., '8' for row 0).
      */
-    private String getRankChar(int row) {
+    private String getRankChar(int row){
         return String.valueOf((char) ('8' - row));
     }
 }

@@ -1,6 +1,6 @@
 package Model;
 
-//helper class for GameState
+// helper class for GameState
 public class CastlingRights{
     boolean whiteCastleKingSide;
     boolean whiteCastleQueenSide;
@@ -16,7 +16,7 @@ public class CastlingRights{
     }
 
     // Copying constructor
-    public CastlingRights(CastlingRights other) {
+    public CastlingRights(CastlingRights other){
         this.whiteCastleKingSide = other.whiteCastleKingSide;
         this.whiteCastleQueenSide = other.whiteCastleQueenSide;
         this.blackCastleKingSide = other.blackCastleKingSide;

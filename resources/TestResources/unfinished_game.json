@@ -1,0 +1,532 @@
+{
+  "board": {
+    "pieceGrid": [
+      [
+        {
+          "isWhite": false,
+          "type": "ROOK"
+        },
+        {
+          "isWhite": false,
+          "type": "KNIGHT"
+        },
+        {
+          "isWhite": false,
+          "type": "BISHOP"
+        },
+        null,
+        null,
+        {
+          "isWhite": true,
+          "type": "QUEEN"
+        },
+        null,
+        {
+          "isWhite": false,
+          "type": "ROOK"
+        }
+      ],
+      [
+        {
+          "isWhite": false,
+          "type": "PAWN"
+        },
+        {
+          "isWhite": false,
+          "type": "PAWN"
+        },
+        {
+          "isWhite": false,
+          "type": "PAWN"
+        },
+        null,
+        null,
+        null,
+        {
+          "isWhite": false,
+          "type": "PAWN"
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "isWhite": false,
+          "type": "KNIGHT"
+        },
+        {
+          "isWhite": false,
+          "type": "KING"
+        },
+        {
+          "isWhite": false,
+          "type": "PAWN"
+        }
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "isWhite": false,
+          "type": "PAWN"
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        {
+          "isWhite": true,
+          "type": "PAWN"
+        },
+        {
+          "isWhite": true,
+          "type": "PAWN"
+        },
+        {
+          "isWhite": true,
+          "type": "PAWN"
+        },
+        null,
+        null,
+        {
+          "isWhite": true,
+          "type": "PAWN"
+        },
+        {
+          "isWhite": true,
+          "type": "PAWN"
+        },
+        {
+          "isWhite": true,
+          "type": "PAWN"
+        }
+      ],
+      [
+        {
+          "isWhite": true,
+          "type": "ROOK"
+        },
+        {
+          "isWhite": true,
+          "type": "KNIGHT"
+        },
+        {
+          "isWhite": true,
+          "type": "BISHOP"
+        },
+        null,
+        {
+          "isWhite": true,
+          "type": "KING"
+        },
+        null,
+        null,
+        {
+          "isWhite": true,
+          "type": "ROOK"
+        }
+      ]
+    ]
+  },
+  "whitePlayer": {
+    "name": "Tester White",
+    "elo": 1200
+  },
+  "blackPlayer": {
+    "name": "Tester Black",
+    "elo": 1200
+  },
+  "isWhiteTurn": false,
+  "moveHistory": [
+    {
+      "from": {
+        "row": 7,
+        "column": 6
+      },
+      "to": {
+        "row": 5,
+        "column": 5
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "KNIGHT"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 1,
+        "column": 3
+      },
+      "to": {
+        "row": 3,
+        "column": 3
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 6,
+        "column": 4
+      },
+      "to": {
+        "row": 4,
+        "column": 4
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 3,
+        "column": 3
+      },
+      "to": {
+        "row": 4,
+        "column": 4
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "pieceCaptured": {
+        "isWhite": true,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 5,
+        "column": 5
+      },
+      "to": {
+        "row": 3,
+        "column": 6
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "KNIGHT"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 0,
+        "column": 6
+      },
+      "to": {
+        "row": 2,
+        "column": 5
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "KNIGHT"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 6,
+        "column": 3
+      },
+      "to": {
+        "row": 5,
+        "column": 3
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 4,
+        "column": 4
+      },
+      "to": {
+        "row": 5,
+        "column": 3
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "pieceCaptured": {
+        "isWhite": true,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 7,
+        "column": 5
+      },
+      "to": {
+        "row": 5,
+        "column": 3
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "BISHOP"
+      },
+      "pieceCaptured": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 1,
+        "column": 7
+      },
+      "to": {
+        "row": 2,
+        "column": 7
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 3,
+        "column": 6
+      },
+      "to": {
+        "row": 1,
+        "column": 5
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "KNIGHT"
+      },
+      "pieceCaptured": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 0,
+        "column": 4
+      },
+      "to": {
+        "row": 1,
+        "column": 5
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "KING"
+      },
+      "pieceCaptured": {
+        "isWhite": true,
+        "type": "KNIGHT"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 5,
+        "column": 3
+      },
+      "to": {
+        "row": 2,
+        "column": 6
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "BISHOP"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": true,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 1,
+        "column": 5
+      },
+      "to": {
+        "row": 2,
+        "column": 6
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "KING"
+      },
+      "pieceCaptured": {
+        "isWhite": true,
+        "type": "BISHOP"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 7,
+        "column": 3
+      },
+      "to": {
+        "row": 0,
+        "column": 3
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "QUEEN"
+      },
+      "pieceCaptured": {
+        "isWhite": false,
+        "type": "QUEEN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 1,
+        "column": 4
+      },
+      "to": {
+        "row": 3,
+        "column": 4
+      },
+      "pieceMoved": {
+        "isWhite": false,
+        "type": "PAWN"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    },
+    {
+      "from": {
+        "row": 0,
+        "column": 3
+      },
+      "to": {
+        "row": 0,
+        "column": 5
+      },
+      "pieceMoved": {
+        "isWhite": true,
+        "type": "QUEEN"
+      },
+      "pieceCaptured": {
+        "isWhite": false,
+        "type": "BISHOP"
+      },
+      "isCastling": false,
+      "isEnPassant": false,
+      "isPromotion": false,
+      "isCheck": false,
+      "isCheckmate": false
+    }
+  ],
+  "canWhiteOfferDraw": true,
+  "canBlackOfferDraw": true,
+  "castlingRights": {
+    "whiteCastleKingSide": true,
+    "whiteCastleQueenSide": true,
+    "blackCastleKingSide": false,
+    "blackCastleQueenSide": false
+  }
+}
