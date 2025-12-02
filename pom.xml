@@ -42,6 +42,13 @@
       </resource>
     </resources>
 
+    <testResources>
+      <testResource>
+        <directory>resources/TestResources</directory>
+        <targetPath>.</targetPath>
+      </testResource>
+    </testResources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
